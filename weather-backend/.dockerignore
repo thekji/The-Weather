@@ -1,0 +1,12 @@
+.git
+.idea
+.vscode
+.DS_Store
+.env*
+*.log
+target
+.mvn
+mvnw*
+docs
+HELP.md
+README*
