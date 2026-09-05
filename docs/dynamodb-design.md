@@ -1,4 +1,10 @@
-Users - login, register
+# TheWeather DynamoDB Design
+
+**Status:** Frozen and user-confirmed on 4 September 2026.
+
+Creating the AWS tables, IAM permissions, and repository adapters remains implementation work.
+
+## Users - login and registration
 PK: userID
 Attributes:
 - email
@@ -9,7 +15,9 @@ Attributes:
 GSI: EmailIndex - - find user during login, check whether an email already exists during registration
 PK: email (normalizedEmail)
 
-StarredLocations - list locations belonging to one user, star/unstar location
+Store `email` in one normalized form, such as trimmed lowercase. The assessment implementation checks `EmailIndex` before creation. Document that strict concurrent uniqueness would require a transactional email-identity item if it is not implemented.
+
+## StarredLocations - list, star, unstar, and toggle alerts
 PK: userID
 SK: locationID
 Attributes:
@@ -20,7 +28,9 @@ Attributes:
 - starredAt
 - weatherAlertsEnabled
 
-CommunityPosts - query posts for a location, query posts for a user
+Use the same `latitude` and `longitude` names returned by normalized Geoapify search. Do not introduce `lat`/`lon` aliases.
+
+## CommunityPosts - create posts and query a location feed
 PK: postID
 Attributes:
 - userID
@@ -40,9 +50,7 @@ GSI: LocationPostsIndex
 PK: locationID
 SK: createdAt
 
-GSI: UserPostsIndex
-PK: userID
-SK: createdAt
+Query `LocationPostsIndex` newest-first with `ScanIndexForward=false` and a bounded page size/cursor. Do not scan `CommunityPosts` for the normal feed. `UserPostsIndex` is not part of the frozen P0 design because no required endpoint queries a user's posts.
 
 {
     "postID": "post_20260901_001",
@@ -80,14 +88,18 @@ SK: createdAt
     "notHelpfulCount": 1
 }
 
-PostFeedback - check whether a user already voted on a post
+`precipitation_probability` is a percentage. `precipitation` and `rain` are millimetres.
+
+## PostFeedback - prevent duplicate feedback
 PK: postID
 SK: userID
 Attributes:
 - feedbackType
 - createdAt
 
-AlertRules - retrieve predefined weather alert rules
+Use a conditional write/transaction with the post counter update so a duplicate request cannot incorrectly increment counters. If vote changes are not implemented, return a controlled conflict.
+
+## AlertRules - retrieve predefined weather alert rules
 PK: alertRuleID
 Attributes:
 - alertType
@@ -106,7 +118,7 @@ Attributes:
 }
 
 
-AlertState
+## AlertState
 PK: userID
 SK: locationID
 Attributes:
@@ -121,3 +133,5 @@ Attributes:
         "HIGH_TEMPERATURE": "2026-08-31T06:15:00Z"
     }
 }
+
+Store one independent cooldown timestamp per alert type. There is no separate `Locations`, `WeatherSnapshot`, alert-history, or daily-summary table.

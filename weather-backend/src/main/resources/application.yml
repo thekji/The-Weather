@@ -1,11 +1,19 @@
 spring:
-  application:
-    name: weather
+    application:
+        name: weather
 
 springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    operations-sorter: method
-    tags-sorter: alpha
+    api-docs:
+        path: /v3/api-docs
+    swagger-ui:
+        path: /swagger-ui.html
+        operations-sorter: method
+        tags-sorter: alpha
+
+geoapify:
+    map-api-key: ${GEOAPIFY_KEY:}
+    search-api-key: ${GEOAPIFY_SEARCH_KEY:${GEOAPIFY_KEY:}}
+    base-url: https://api.geoapify.com
+
+weather:
+    forecast-url: ${WEATHER_FORECAST_URL:}

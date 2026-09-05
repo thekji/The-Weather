@@ -1,16 +1,19 @@
 services:
-  weather-backend:
-    build:
-      context: ./weather-backend
-    ports:
-      - "8080:8080"
+    weather-backend:
+        build:
+            context: ./weather-backend
+        env_file:
+            - path: ./.env
+              required: false
+        ports:
+            - "8080:8080"
 
-  weather-frontend:
-    build:
-      context: ./weather-frontend
-    depends_on:
-      - weather-backend
-    ports:
-      - "3000:8080"
-    volumes:
-      - ./weather-frontend/nginx.compose.conf:/etc/nginx/conf.d/compose-proxy.conf:ro
+    weather-frontend:
+        build:
+            context: ./weather-frontend
+        depends_on:
+            - weather-backend
+        ports:
+            - "3000:8080"
+        volumes:
+            - ./weather-frontend/nginx.compose.conf:/etc/nginx/conf.d/compose-proxy.conf:ro

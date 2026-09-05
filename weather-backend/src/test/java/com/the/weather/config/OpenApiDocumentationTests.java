@@ -32,6 +32,7 @@ class OpenApiDocumentationTests {
                 .andExpect(jsonPath("$.info.title").value("TheWeather API"))
                 .andExpect(jsonPath("$.info.version").value("v1"))
                 .andExpect(jsonPath("$.paths['/api/weather']").exists())
+                .andExpect(jsonPath("$.paths['/api/locations/search']").exists())
                 .andExpect(jsonPath("$.paths['/api/system/ping']").exists());
     }
 
