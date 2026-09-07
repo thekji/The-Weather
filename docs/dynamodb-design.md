@@ -5,17 +5,16 @@
 Creating the AWS tables, IAM permissions, and repository adapters remains implementation work.
 
 ## Users - login and registration
-PK: userID
+PK: email (normalized)
 Attributes:
-- email
+- userID
 - name
 - passwordHash
 - createdAt
 
-GSI: EmailIndex - - find user during login, check whether an email already exists during registration
-PK: email (normalizedEmail)
-
-Store `email` in one normalized form, such as trimmed lowercase. The assessment implementation checks `EmailIndex` before creation. Document that strict concurrent uniqueness would require a transactional email-identity item if it is not implemented.
+Store `email` in one normalized form, such as trimmed lowercase. Registration uses
+a conditional `PutItem` with `attribute_not_exists(email)`, which guarantees that
+concurrent requests cannot register the same normalized email twice.
 
 ## StarredLocations - list, star, unstar, and toggle alerts
 PK: userID

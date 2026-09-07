@@ -2,6 +2,8 @@ services:
     weather-backend:
         build:
             context: ./weather-backend
+        environment:
+            SPRING_PROFILES_ACTIVE: local
         env_file:
             - path: ./.env
               required: false

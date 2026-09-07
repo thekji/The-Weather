@@ -1,4 +1,7 @@
-import { Link, NavLink } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../stores/authStore'
+import { WeatherBrandIcon } from './WeatherBrandIcon'
 
 export type AppPage = 'starred' | 'maps' | 'account'
 
@@ -45,23 +48,19 @@ function NavigationIcon({ name }: { name: IconName }) {
     )
 }
 
-function BrandMark() {
-    return (
-        <svg viewBox="0 0 44 44" aria-hidden="true" focusable="false">
-            <circle cx="26" cy="17" r="8" className="brand-sun" />
-            <path
-                className="brand-cloud"
-                d="M31.7 32H12.4a7.4 7.4 0 0 1-.55-14.78A10.5 10.5 0 0 1 31.5 19a6.52 6.52 0 0 1 .2 13Z"
-            />
-        </svg>
-    )
-}
-
 export function Sidebar({ currentPage }: SidebarProps) {
+    const navigate = useNavigate()
+    const clearSession = useAuthStore((state) => state.clearSession)
+
+    function handleLogout() {
+        clearSession()
+        navigate('/login', { replace: true })
+    }
+
     return (
         <aside className="sidebar">
-            <Link className="brand" to="/starred" aria-label="Weather home">
-                <span className="brand-mark"><BrandMark /></span>
+            <Link className="brand" to="/map" aria-label="Weather home">
+                <span className="brand-mark"><WeatherBrandIcon /></span>
             </Link>
 
             <nav className="primary-nav" aria-label="Primary navigation">
@@ -87,6 +86,15 @@ export function Sidebar({ currentPage }: SidebarProps) {
                 </ul>
             </nav>
 
+            <button
+                type="button"
+                className="sidebar-logout"
+                aria-label="Log out"
+                title="Log out"
+                onClick={handleLogout}
+            >
+                <LogOut aria-hidden="true" />
+            </button>
         </aside>
     )
 }

@@ -4,6 +4,7 @@ POST   /api/auth/login
 
 LOCATION
 GET    /api/locations/search?q=
+GET    /api/locations/reverse?latitude=&longitude=
 
 STARS
 GET    /api/stars

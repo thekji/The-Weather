@@ -1,7 +1,11 @@
 import { Suspense, lazy, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { hasAuthSession } from '../api/auth'
+import { LoadingScreen } from '../components/LoadingScreen'
 import { Sidebar, type AppPage } from '../components/Sidebar'
-import { PlaceholderPage } from '../pages/PlaceholderPage'
+import { AccountPage } from '../pages/AccountPage'
+import { LoginPage } from '../pages/LoginPage'
+import { RegisterPage } from '../pages/RegisterPage'
 import { StarredPage } from '../pages/StarredPage'
 
 type PageLayoutProps = {
@@ -14,18 +18,26 @@ const MapPage = lazy(() =>
     import('../pages/MapPage').then(({ MapPage }) => ({ default: MapPage })),
 )
 
-function AccountPage() {
-    return (
-        <PlaceholderPage
-            eyebrow="Profile"
-            title="Account"
-            message="Your account settings will live here."
-        />
-    )
+function ProtectedRoute({ children }: { children: ReactNode }) {
+    if (!hasAuthSession()) return <Navigate to="/login" replace />
+    return children
+}
+
+function PublicAuthRoute({ children }: { children: ReactNode }) {
+    if (hasAuthSession()) return <Navigate to="/map" replace />
+    return children
+}
+
+function HomeRoute() {
+    return <Navigate to={hasAuthSession() ? '/map' : '/login'} replace />
 }
 
 function PageLayout({ page, children, fullScreen = false }: PageLayoutProps) {
-    const pageContentClassName = `page-content${fullScreen ? ' page-content--map' : ''}`
+    const pageContentClassName = [
+        'page-content',
+        fullScreen ? 'page-content--map' : '',
+        page === 'account' || page === 'starred' ? 'page-content--gradient' : '',
+    ].filter(Boolean).join(' ')
 
     return (
         <div className="app-shell">
@@ -49,7 +61,12 @@ function StarredRoute() {
 function MapRoute() {
     return (
         <PageLayout page="maps" fullScreen>
-            <Suspense fallback={<div className="page-loading" role="status">Loading map</div>}>
+            <Suspense fallback={(
+                <LoadingScreen
+                    title="Preparing your map"
+                    message="Loading the map and location tools…"
+                />
+            )}>
                 <MapPage />
             </Suspense>
         </PageLayout>
@@ -67,16 +84,26 @@ function AccountRoute() {
 const RouteConfig = () => {
     return (
         <Routes>
-            <Route path="/" element={<Navigate to="/starred" replace />} />
-            <Route path="/starred" element={<StarredRoute />} />
-            <Route path="/starred/*" element={<StarredRoute />} />
-            <Route path="/map" element={<MapRoute />} />
-            <Route path="/map/*" element={<MapRoute />} />
-            <Route path="/maps" element={<MapRoute />} />
-            <Route path="/maps/*" element={<MapRoute />} />
-            <Route path="/account" element={<AccountRoute />} />
-            <Route path="/account/*" element={<AccountRoute />} />
-            <Route path="*" element={<Navigate to="/starred" replace />} />
+            <Route path="/" element={<HomeRoute />} />
+            <Route path="/login" element={(
+                <PublicAuthRoute>
+                    <LoginPage />
+                </PublicAuthRoute>
+            )} />
+            <Route path="/register" element={(
+                <PublicAuthRoute>
+                    <RegisterPage />
+                </PublicAuthRoute>
+            )} />
+            <Route path="/starred" element={<ProtectedRoute><StarredRoute /></ProtectedRoute>} />
+            <Route path="/starred/*" element={<ProtectedRoute><StarredRoute /></ProtectedRoute>} />
+            <Route path="/map" element={<ProtectedRoute><MapRoute /></ProtectedRoute>} />
+            <Route path="/map/*" element={<ProtectedRoute><MapRoute /></ProtectedRoute>} />
+            <Route path="/maps" element={<ProtectedRoute><MapRoute /></ProtectedRoute>} />
+            <Route path="/maps/*" element={<ProtectedRoute><MapRoute /></ProtectedRoute>} />
+            <Route path="/account" element={<ProtectedRoute><AccountRoute /></ProtectedRoute>} />
+            <Route path="/account/*" element={<ProtectedRoute><AccountRoute /></ProtectedRoute>} />
+            <Route path="*" element={<HomeRoute />} />
         </Routes>
     )
 }

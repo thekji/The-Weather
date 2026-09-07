@@ -1,6 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { Minus, Navigation2, Plus, Search, X } from 'lucide-react'
+import { getAuthorizationHeaders } from '../api/auth'
+import { reverseGeocode, type LocationSearchResult } from '../api/locations'
+import { getCurrentWeather, type CurrentWeather } from '../api/weather'
 
 type MapConfig = {
     geoapifyMapApiKey?: string
@@ -11,66 +15,502 @@ type Coordinates = {
     longitude: number
 }
 
-type LocationSearchResult = {
-    name: string
-    address: string
-    longitude: number
-    latitude: number
-}
-
-type CurrentWeather = {
-    latitude: number
-    longitude: number
-    recordedAt: string
-    timezone: string
-    temperatureCelsius: number
-    apparentTemperatureCelsius: number
-    relativeHumidityPercent: number
-    precipitationMillimetres: number
-    rainMillimetres: number
-    windSpeedKilometresPerHour: number
-    windDirectionDegrees: number
-    weatherCode: number
-    condition: string
-    daytime: boolean
-}
-
 const DEFAULT_LOCATION: Coordinates = {
     latitude: 10.7769,
     longitude: 106.7009,
 }
 
-function SearchIcon() {
-    return (
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m16.5 16.5 4 4" />
-        </svg>
-    )
-}
+const MAP_CONTROLS_STYLES = String.raw`
+    .map-search-panel {
+        position: absolute;
+        z-index: 500;
+        top: 24px;
+        left: 172px;
+        width: min(760px, calc(100vw - 212px));
+    }
 
-function CrosshairIcon() {
-    return (
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <circle cx="12" cy="12" r="7" />
-            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-        </svg>
-    )
-}
+    .map-search {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 72px;
+        padding: 9px;
+        border: 1px solid rgba(255, 255, 255, 0.86);
+        border-radius: 28px;
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow: 0 18px 46px rgba(45, 101, 148, 0.18);
+        backdrop-filter: blur(18px) saturate(125%);
+        -webkit-backdrop-filter: blur(18px) saturate(125%);
+    }
 
-function CloseIcon() {
-    return (
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M6 6l12 12M18 6 6 18" />
-        </svg>
-    )
-}
+    .map-search-field {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        min-height: 54px;
+        flex: 1 1 auto;
+        gap: 14px;
+        padding: 0 9px 0 20px;
+        border: 1px solid #d7e5f2;
+        border-radius: 21px;
+        background: rgba(255, 255, 255, 0.76);
+        box-shadow: inset 0 1px 2px rgba(60, 105, 143, 0.04);
+    }
+
+    .map-search-field > svg {
+        flex: 0 0 auto;
+        width: 25px;
+        height: 25px;
+        color: var(--accent);
+        stroke-width: 2.2;
+    }
+
+    .map-search input {
+        min-width: 0;
+        flex: 1 1 auto;
+        border: 0;
+        outline: 0;
+        color: var(--ink);
+        font: inherit;
+        font-size: 1rem;
+        font-weight: 600;
+        background: transparent;
+    }
+
+    .map-search input::placeholder {
+        color: #8a96a6;
+        font-weight: 400;
+    }
+
+    .map-search input::-webkit-search-cancel-button {
+        display: none;
+    }
+
+    .map-search-field:focus-within {
+        border-color: rgba(21, 150, 245, 0.58);
+        box-shadow: 0 0 0 3px rgba(21, 150, 245, 0.1);
+    }
+
+    .map-search .map-search-submit {
+        flex: 0 0 auto;
+        min-height: 54px;
+        padding: 0 25px;
+        border: 0;
+        border-radius: 20px;
+        color: #ffffff;
+        font: inherit;
+        font-size: 0.94rem;
+        font-weight: 800;
+        background: var(--accent);
+        box-shadow: 0 8px 20px rgba(21, 150, 245, 0.24);
+        cursor: pointer;
+        transition: background-color 150ms ease, transform 150ms ease;
+    }
+
+    .map-search .map-search-submit:hover:not(:disabled) {
+        background: #087fd7;
+        transform: translateY(-1px);
+    }
+
+    .map-search .map-search-submit:disabled {
+        color: #8e9aa8;
+        background: #e5ebf0;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+
+    .map-search .map-search-clear {
+        display: grid;
+        flex: 0 0 38px;
+        width: 38px;
+        min-height: 38px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        color: #46617d;
+        background: #eef6fc;
+        cursor: pointer;
+        place-items: center;
+    }
+
+    .map-search .map-search-clear:hover {
+        color: var(--accent);
+        background: #e3f2fd;
+    }
+
+    .map-search .map-search-clear svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 2.2;
+    }
+
+    .map-search-error {
+        width: fit-content;
+        max-width: 100%;
+        margin: 10px 0 0;
+        padding: 9px 12px;
+        border-radius: 12px;
+        color: #9f3340;
+        font-size: 0.78rem;
+        font-weight: 800;
+        background: rgba(255, 239, 241, 0.96);
+        box-shadow: 0 10px 24px rgba(32, 43, 60, 0.12);
+    }
+
+    .map-search-results {
+        max-height: min(420px, calc(100vh - 110px));
+        margin: 8px 0 0;
+        padding: 7px;
+        overflow-y: auto;
+        border: 1px solid rgba(210, 221, 229, 0.96);
+        border-radius: 16px;
+        list-style: none;
+        background: rgba(255, 255, 255, 0.97);
+        box-shadow: 0 18px 42px rgba(32, 43, 60, 0.16);
+        backdrop-filter: blur(16px);
+    }
+
+    .map-search-results li + li {
+        border-top: 1px solid #edf1f4;
+    }
+
+    .map-search-results button {
+        display: grid;
+        width: 100%;
+        gap: 5px;
+        padding: 14px 15px;
+        border: 0;
+        border-radius: 10px;
+        color: var(--ink);
+        font: inherit;
+        text-align: left;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .map-search-results button:hover,
+    .map-search-results button:focus-visible {
+        outline: 0;
+        background: #eef7fd;
+    }
+
+    .map-search-results strong {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .map-search-results span {
+        color: var(--muted);
+        font-size: 0.88rem;
+        font-weight: 400;
+        line-height: 1.35;
+    }
+
+    .map-search-results small {
+        color: #82909f;
+        font-size: 0.78rem;
+        font-weight: 400;
+    }
+
+    .map-location-control {
+        position: absolute;
+        z-index: 500;
+        bottom: 30px;
+        left: 136px;
+        display: grid;
+        gap: 8px;
+    }
+
+    .map-location-control p {
+        max-width: 260px;
+        margin: 0;
+        padding: 9px 12px;
+        border-radius: 12px;
+        color: #9f3340;
+        font-size: 0.76rem;
+        font-weight: 700;
+        background: rgba(255, 239, 241, 0.96);
+        box-shadow: 0 8px 22px rgba(32, 43, 60, 0.12);
+    }
+
+    .map-location-control button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 52px;
+        padding: 0 22px;
+        border: 1px solid rgba(255, 255, 255, 0.88);
+        border-radius: 18px;
+        color: var(--ink);
+        font: inherit;
+        font-size: 0.9rem;
+        font-weight: 800;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 14px 34px rgba(32, 43, 60, 0.15);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        cursor: pointer;
+        transition: color 150ms ease, transform 150ms ease;
+    }
+
+    .map-location-control button:hover:not(:disabled) {
+        color: var(--accent);
+        transform: translateY(-1px);
+    }
+
+    .map-location-control button:disabled {
+        color: #718196;
+        cursor: wait;
+    }
+
+    .map-location-control svg,
+    .map-location-spinner {
+        width: 21px;
+        height: 21px;
+        color: var(--accent);
+    }
+
+    .map-location-spinner {
+        border: 2px solid #cfe8fa;
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: map-location-spin 800ms linear infinite;
+    }
+
+    .map-zoom-control {
+        position: absolute;
+        z-index: 500;
+        right: 24px;
+        bottom: 30px;
+        overflow: hidden;
+        border: 1px solid rgba(210, 221, 229, 0.92);
+        border-radius: 17px;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 14px 34px rgba(32, 43, 60, 0.15);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+    }
+
+    .map-zoom-control button {
+        display: grid;
+        width: 52px;
+        height: 52px;
+        padding: 0;
+        border: 0;
+        color: var(--ink);
+        background: transparent;
+        cursor: pointer;
+        place-items: center;
+        transition: color 150ms ease, background-color 150ms ease;
+    }
+
+    .map-zoom-control button + button {
+        border-top: 1px solid #dde7ef;
+    }
+
+    .map-zoom-control button:hover {
+        color: var(--accent);
+        background: #eef7fd;
+    }
+
+    .map-zoom-control svg {
+        width: 25px;
+        height: 25px;
+        stroke-width: 2.2;
+    }
+
+    @keyframes map-location-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 1100px) and (min-width: 761px) {
+        .map-search-panel {
+            top: 20px;
+            left: 136px;
+            width: min(680px, calc(100vw - 160px));
+        }
+
+        .map-search {
+            min-height: 64px;
+            gap: 9px;
+            padding: 8px;
+            border-radius: 24px;
+        }
+
+        .map-search-field {
+            min-height: 48px;
+            gap: 11px;
+            padding-left: 16px;
+            border-radius: 18px;
+        }
+
+        .map-search-field > svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .map-search input {
+            font-size: 0.9rem;
+        }
+
+        .map-search .map-search-submit {
+            min-height: 48px;
+            padding: 0 20px;
+            border-radius: 17px;
+            font-size: 0.86rem;
+        }
+
+        .map-location-control {
+            left: 136px;
+        }
+
+        .map-zoom-control {
+            right: 20px;
+        }
+
+        .weather-modal {
+            top: 108px;
+            right: 20px;
+            width: min(330px, calc(100vw - 156px));
+            max-height: calc(100svh - 138px);
+            overflow-y: auto;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .map-search-panel {
+            top: 16px;
+            left: 16px;
+            width: calc(100vw - 32px);
+        }
+
+        .map-search {
+            min-height: 58px;
+            gap: 7px;
+            padding: 7px;
+            border-radius: 22px;
+        }
+
+        .map-search-field {
+            min-height: 44px;
+            gap: 9px;
+            padding-right: 6px;
+            padding-left: 13px;
+            border-radius: 16px;
+        }
+
+        .map-search-field > svg {
+            width: 21px;
+            height: 21px;
+        }
+
+        .map-search input {
+            font-size: 0.86rem;
+        }
+
+        .map-search .map-search-submit {
+            min-height: 44px;
+            padding: 0 14px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .map-search .map-search-clear {
+            flex-basis: 32px;
+            width: 32px;
+            min-height: 32px;
+        }
+
+        .map-location-control {
+            bottom: 94px;
+            left: 16px;
+        }
+
+        .map-location-control button {
+            min-height: 46px;
+            padding: 0 16px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+        }
+
+        .map-zoom-control {
+            right: 16px;
+            bottom: 94px;
+            border-radius: 15px;
+        }
+
+        .map-zoom-control button {
+            width: 46px;
+            height: 46px;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .map-search-panel {
+            top: 12px;
+            left: 12px;
+            width: calc(100vw - 24px);
+        }
+
+        .map-search {
+            gap: 6px;
+            padding: 6px;
+            border-radius: 20px;
+        }
+
+        .map-search-field {
+            gap: 7px;
+            padding-left: 11px;
+        }
+
+        .map-search .map-search-submit {
+            min-width: 60px;
+            padding: 0 10px;
+        }
+
+        .map-location-control {
+            bottom: 90px;
+            left: 12px;
+        }
+
+        .map-location-control button {
+            padding: 0 14px;
+        }
+
+        .map-zoom-control {
+            right: 12px;
+            bottom: 90px;
+        }
+    }
+
+    @media (max-height: 700px) and (min-width: 761px) {
+        .weather-modal {
+            top: 96px;
+            max-height: calc(100svh - 116px);
+            overflow-y: auto;
+        }
+
+        .map-location-control,
+        .map-zoom-control {
+            bottom: 20px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .map-location-spinner {
+            animation: none;
+        }
+    }
+`
 
 export function MapPage() {
     const mapElementRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<L.Map | null>(null)
     const markerRef = useRef<L.Marker | null>(null)
     const weatherRequestRef = useRef<AbortController | null>(null)
+    const reverseGeocodeRequestRef = useRef<AbortController | null>(null)
     const [mapReady, setMapReady] = useState(false)
     const [mapError, setMapError] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
@@ -81,6 +521,43 @@ export function MapPage() {
     const [currentWeather, setCurrentWeather] = useState<CurrentWeather | null>(null)
     const [weatherError, setWeatherError] = useState('')
     const [isWeatherLoading, setIsWeatherLoading] = useState(false)
+    const [isLocating, setIsLocating] = useState(false)
+    const [locationError, setLocationError] = useState('')
+
+    const selectLocation = useCallback(async (result: LocationSearchResult) => {
+        const latLng: L.LatLngExpression = [result.latitude, result.longitude]
+        mapRef.current?.flyTo(latLng, 18, { duration: 0.8 })
+        markerRef.current?.setLatLng(latLng)
+        setSearchQuery(result.address)
+        setSearchResults([])
+        setSearchError('')
+        setSelectedLocation(result)
+        setCurrentWeather(null)
+        setWeatherError('')
+        setIsWeatherLoading(true)
+
+        weatherRequestRef.current?.abort()
+        const controller = new AbortController()
+        weatherRequestRef.current = controller
+
+        try {
+            const weather = await getCurrentWeather({
+                latitude: result.latitude,
+                longitude: result.longitude,
+            }, controller.signal)
+            setCurrentWeather(weather)
+        } catch (error) {
+            if (!controller.signal.aborted) {
+                setWeatherError(
+                    error instanceof Error ? error.message : 'Current weather could not be loaded.',
+                )
+            }
+        } finally {
+            if (!controller.signal.aborted) {
+                setIsWeatherLoading(false)
+            }
+        }
+    }, [])
 
     useEffect(() => {
         const mapElement = mapElementRef.current
@@ -91,7 +568,10 @@ export function MapPage() {
         async function initialiseMap() {
             try {
                 const response = await fetch('/api/config', {
-                    headers: { Accept: 'application/json' },
+                    headers: {
+                        Accept: 'application/json',
+                        ...getAuthorizationHeaders(),
+                    },
                 })
 
                 if (!response.ok) {
@@ -112,7 +592,6 @@ export function MapPage() {
                     zoomControl: false,
                 })
 
-                L.control.zoom({ position: 'bottomright' }).addTo(map)
                 L.tileLayer(
                     `https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(apiKey)}`,
                     {
@@ -136,6 +615,27 @@ export function MapPage() {
 
                 map.on('click', ({ latlng }) => {
                     markerRef.current?.setLatLng(latlng)
+
+                    reverseGeocodeRequestRef.current?.abort()
+                    weatherRequestRef.current?.abort()
+                    const controller = new AbortController()
+                    reverseGeocodeRequestRef.current = controller
+                    setSearchResults([])
+                    setSearchError('')
+                    setSelectedLocation(null)
+                    setCurrentWeather(null)
+
+                    void reverseGeocode(latlng.lat, latlng.lng, controller.signal)
+                            .then((location) => selectLocation(location))
+                            .catch((error: unknown) => {
+                                if (!controller.signal.aborted) {
+                                    setSearchError(
+                                        error instanceof Error
+                                            ? error.message
+                                            : 'Could not identify this map location.',
+                                    )
+                                }
+                            })
                 })
 
                 mapRef.current = map
@@ -151,12 +651,13 @@ export function MapPage() {
 
         return () => {
             cancelled = true
+            reverseGeocodeRequestRef.current?.abort()
             weatherRequestRef.current?.abort()
             mapRef.current?.remove()
             mapRef.current = null
             markerRef.current = null
         }
-    }, [])
+    }, [selectLocation])
 
     function moveMarker(nextCoordinates: Coordinates, zoom = 13) {
         const latLng: L.LatLngExpression = [nextCoordinates.latitude, nextCoordinates.longitude]
@@ -178,7 +679,10 @@ export function MapPage() {
         try {
             const searchParams = new URLSearchParams({ q: query })
             const response = await fetch(`/api/locations/search?${searchParams}`, {
-                headers: { Accept: 'application/json' },
+                headers: {
+                    Accept: 'application/json',
+                    ...getAuthorizationHeaders(),
+                },
             })
 
             if (!response.ok) {
@@ -200,55 +704,12 @@ export function MapPage() {
     }
 
     async function selectSearchResult(result: LocationSearchResult) {
-        moveMarker({
-            latitude: result.latitude,
-            longitude: result.longitude,
-        }, 16)
-        setSearchQuery(result.address)
-        setSearchResults([])
-        setSearchError('')
-        setSelectedLocation(result)
-        setCurrentWeather(null)
-        setWeatherError('')
-        setIsWeatherLoading(true)
-
-        weatherRequestRef.current?.abort()
-        const controller = new AbortController()
-        weatherRequestRef.current = controller
-
-        try {
-            const searchParams = new URLSearchParams({
-                latitude: String(result.latitude),
-                longitude: String(result.longitude),
-            })
-            const response = await fetch(`/api/weather?${searchParams}`, {
-                headers: { Accept: 'application/json' },
-                signal: controller.signal,
-            })
-
-            if (!response.ok) {
-                throw new Error('Current weather could not be loaded.')
-            }
-
-            const weather = (await response.json()) as CurrentWeather
-            if (typeof weather.temperatureCelsius !== 'number' || !weather.condition) {
-                throw new Error('The weather service returned an invalid response.')
-            }
-            setCurrentWeather(weather)
-        } catch (error) {
-            if (!controller.signal.aborted) {
-                setWeatherError(
-                    error instanceof Error ? error.message : 'Current weather could not be loaded.',
-                )
-            }
-        } finally {
-            if (!controller.signal.aborted) {
-                setIsWeatherLoading(false)
-            }
-        }
+        reverseGeocodeRequestRef.current?.abort()
+        await selectLocation(result)
     }
 
     function closeWeatherModal() {
+        reverseGeocodeRequestRef.current?.abort()
         weatherRequestRef.current?.abort()
         weatherRequestRef.current = null
         setSelectedLocation(null)
@@ -257,15 +718,75 @@ export function MapPage() {
         setIsWeatherLoading(false)
     }
 
-    function recenterMap() {
+    function clearSearch() {
         setSearchError('')
         setSearchResults([])
-        closeWeatherModal()
-        moveMarker(DEFAULT_LOCATION, 12)
+        setSearchQuery('')
+    }
+
+    function goToCurrentLocation() {
+        setLocationError('')
+
+        if (!navigator.geolocation) {
+            setLocationError('Location is not supported by this browser.')
+            return
+        }
+
+        setIsLocating(true)
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const coordinates = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                }
+
+                moveMarker(coordinates, 16)
+                reverseGeocodeRequestRef.current?.abort()
+                const controller = new AbortController()
+                reverseGeocodeRequestRef.current = controller
+
+                void (async () => {
+                    let location: LocationSearchResult
+
+                    try {
+                        location = await reverseGeocode(
+                            coordinates.latitude,
+                            coordinates.longitude,
+                            controller.signal,
+                        )
+                    } catch {
+                        if (controller.signal.aborted) return
+
+                        location = {
+                            locationID: `current-${coordinates.latitude}-${coordinates.longitude}`,
+                            name: 'My location',
+                            address: 'Current location',
+                            ...coordinates,
+                        }
+                    }
+
+                    await selectLocation(location)
+                })().finally(() => setIsLocating(false))
+            },
+            (error) => {
+                const message = error.code === error.PERMISSION_DENIED
+                    ? 'Allow location access to find your position.'
+                    : 'Your current location could not be found.'
+
+                setLocationError(message)
+                setIsLocating(false)
+            },
+            {
+                enableHighAccuracy: true,
+                maximumAge: 60_000,
+                timeout: 12_000,
+            },
+        )
     }
 
     return (
         <section className="map-page" aria-label="Map">
+            <style>{MAP_CONTROLS_STYLES}</style>
             <div className="map-frame">
                 <div
                     ref={mapElementRef}
@@ -276,8 +797,8 @@ export function MapPage() {
                 {!mapReady && !mapError && (
                     <div className="map-message" role="status">
                         <span className="map-loader" aria-hidden="true" />
-                        <strong>Loading map</strong>
-                        <small>Connecting to Geoapify…</small>
+                        <strong>Preparing your map</strong>
+                        <small>Loading the map and location tools…</small>
                     </div>
                 )}
 
@@ -292,27 +813,37 @@ export function MapPage() {
                 {mapReady && !mapError && (
                     <div className="map-search-panel">
                         <form className="map-search" role="search" onSubmit={searchLocation}>
-                            <SearchIcon />
-                            <input
-                                type="search"
-                                value={searchQuery}
-                                placeholder="Search place or address"
-                                aria-label="Search place or address"
-                                onChange={(event) => {
-                                    setSearchQuery(event.target.value)
-                                    setSearchResults([])
-                                }}
-                            />
-                            <button type="submit" disabled={isSearching || !searchQuery.trim()}>
-                                {isSearching ? 'Searching' : 'Search'}
-                            </button>
+                            <div className="map-search-field">
+                                <Search aria-hidden="true" />
+                                <input
+                                    id="map-location-search"
+                                    name="location"
+                                    type="search"
+                                    value={searchQuery}
+                                    placeholder="Search place or address"
+                                    aria-label="Search place or address"
+                                    onChange={(event) => {
+                                        setSearchQuery(event.target.value)
+                                        setSearchResults([])
+                                    }}
+                                />
+                                {searchQuery && (
+                                    <button
+                                        className="map-search-clear"
+                                        type="button"
+                                        aria-label="Clear search"
+                                        onClick={clearSearch}
+                                    >
+                                        <X aria-hidden="true" />
+                                    </button>
+                                )}
+                            </div>
                             <button
-                                className="map-recenter"
-                                type="button"
-                                aria-label="Recenter to Ho Chi Minh City"
-                                onClick={recenterMap}
+                                className="map-search-submit"
+                                type="submit"
+                                disabled={isSearching || !searchQuery.trim()}
                             >
-                                <CrosshairIcon />
+                                {isSearching ? 'Searching' : 'Search'}
                             </button>
                         </form>
 
@@ -336,6 +867,29 @@ export function MapPage() {
                     </div>
                 )}
 
+                {mapReady && !mapError && (
+                    <>
+                        <div className="map-location-control">
+                            {locationError && <p role="alert">{locationError}</p>}
+                            <button type="button" onClick={goToCurrentLocation} disabled={isLocating}>
+                                {isLocating
+                                    ? <span className="map-location-spinner" aria-hidden="true" />
+                                    : <Navigation2 aria-hidden="true" />}
+                                <span>{isLocating ? 'Locating' : 'My location'}</span>
+                            </button>
+                        </div>
+
+                        <div className="map-zoom-control" aria-label="Map zoom controls">
+                            <button type="button" aria-label="Zoom in" onClick={() => mapRef.current?.zoomIn()}>
+                                <Plus aria-hidden="true" />
+                            </button>
+                            <button type="button" aria-label="Zoom out" onClick={() => mapRef.current?.zoomOut()}>
+                                <Minus aria-hidden="true" />
+                            </button>
+                        </div>
+                    </>
+                )}
+
                 {selectedLocation && (
                     <aside
                         className="weather-modal"
@@ -349,7 +903,7 @@ export function MapPage() {
                             aria-label="Close current weather"
                             onClick={closeWeatherModal}
                         >
-                            <CloseIcon />
+                            <X aria-hidden="true" />
                         </button>
 
                         <p className="weather-modal-eyebrow">Current weather</p>

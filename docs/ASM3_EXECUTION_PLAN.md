@@ -38,7 +38,7 @@ Treat the sources in this order:
 
 The brief explicitly says a developer manual and user manual are **not required**. Do not spend time writing them.
 
-## 2. Verified progress snapshot - 10:00 Friday 4 September 2026
+## 2. Verified progress snapshot - 23:15 Sunday 6 September 2026
 
 This is the current checkpoint for the schedule. A completed design/prototype is kept separate from a fully integrated application feature.
 
@@ -49,9 +49,9 @@ This is the current checkpoint for the schedule. A completed design/prototype is
 | Spring build, React build, Docker/ECR/ECS, ALB and target groups | **Done and deployed** | Both ECS services run behind the ALB; both target groups and the tested frontend/backend routes are healthy. |
 | Lambda -> Open-Meteo | **Prototype test passed** | The deployed Java Lambda returns the requested current HCMC fields. It is still hard-coded and is not the parameterized current/hourly/multi-day weather feature. |
 | API Gateway -> Lambda | **Prototype test passed** | The deployed route invokes the Lambda independently. |
-| Spring -> API Gateway | **Not complete** | This is the current P0-A implementation step. |
-| React displays the Lambda result | **Not complete** | Required to close the P0-A walking-skeleton gate. |
-| Geoapify search and Geoapify map display | **Next test/implementation slice** | Geoapify replaces Mapbox for both normalized search and interactive map tiles; it is not yet implemented in source. |
+| Spring -> API Gateway | **Implemented and unit-tested in source** | Deployment refresh and correlated AWS evidence remain. Local Compose uses a separate `local` profile and calls Open-Meteo directly. |
+| React displays the Lambda result | **Implemented and build-tested in source** | Deployment refresh and visible end-to-end AWS evidence remain. |
+| Geoapify search, reverse geocoding, and map display | **Implemented and tested in source** | Search and map-click selections return normalized locations with stable IDs. Docker/deployed smoke evidence remains. |
 
 The immediate milestone remains the smallest deployed path proving `Browser -> ALB -> React ECS -> Spring ECS -> API Gateway -> Lambda -> Open-Meteo -> React`. The standalone Lambda/API Gateway test is useful evidence, but it does not close that gate until Spring and React invoke it automatically.
 
@@ -61,7 +61,7 @@ The immediate milestone remains the smallest deployed path proving `Browser -> A
 2. Display that returned weather object in React and redeploy both affected ECS services; capture the complete P0-A path.
 3. Build a narrow Geoapify proof: Spring search/normalization first, then a React Leaflet map using Geoapify tiles and the selected marker coordinates.
 4. Treat the Geoapify proof as a prototype until validation, error handling, authentication, tests, deployment, attribution, and evidence satisfy the corresponding Sep 2-3 exit gates.
-5. Resume the remaining dependency order: DynamoDB implementation -> authentication -> stars/weather generalization -> posts/feedback/S3 -> analytics.
+5. Resume the remaining dependency order: DynamoDB implementation -> authentication -> stars -> posts/feedback/S3 -> analytics.
 
 This checkpoint changes neither the 9 September implementation/documentation freeze nor the 10-12 September testing/submission dates.
 
@@ -285,7 +285,7 @@ Create `LocationPostsIndex` with partition key `locationID` and sort key `create
 
 | Table | Keys/indexes and required attributes | Main access pattern |
 |---|---|---|
-| `Users` | PK `userID`; `email`, `name`, `passwordHash`, `createdAt`; GSI `EmailIndex` with normalized `email` partition key | Register/login and check normalized email before creation |
+| `Users` | PK normalized `email`; `userID`, `name`, `passwordHash`, `createdAt`; registration uses a conditional put | Register/login and atomically enforce unique email |
 | `StarredLocations` | PK `userID`, SK `locationID`; `name`, `address`, `latitude`, `longitude`, `starredAt`, `weatherAlertsEnabled` | List one user's stars; star/unstar; toggle alerts |
 | `CommunityPosts` | PK `postID`; fields from Section 5.4; GSI `LocationPostsIndex` PK `locationID`, SK `createdAt` | Direct post access and newest-first location feed |
 | `PostFeedback` | PK `postID`, SK `userID`; `feedbackType`, `createdAt` | Prevent duplicate feedback and enforce `HELPFUL`/`NOT_HELPFUL` |
@@ -958,7 +958,7 @@ Open this file and complete, in order:
 2. [x] Freeze DynamoDB tables, keys, attributes, and `LocationPostsIndex`. Design complete; AWS creation remains separate.
 3. [ ] Freeze endpoints, normalized payloads, exact IDs, validation, and error contract. Draft exists; final consistency check remains.
 4. [x] Verify the clean Spring production build.
-5. [ ] Implement/verify and test the unauthenticated health endpoint. Live endpoint works; dedicated automated test remains.
+5. [x] Implement/verify and test the unauthenticated health endpoint.
 6. [x] Verify the React production build and relative `/api` client.
 7. [x] Build/test the backend Docker image.
 8. [x] Build/test the React/Nginx Docker image and SPA fallback.
@@ -967,8 +967,8 @@ Open this file and complete, in order:
 11. [x] Make both `ip` target groups healthy and verify ALB path routing.
 12. [x] Deploy the minimal Lambda. Current HCMC weather handler is a verified prototype.
 13. [x] Connect API Gateway to Lambda. Standalone invocation is verified.
-14. [ ] Make Spring call API Gateway with controlled timeout/errors. **Current implementation step.**
-15. [ ] Invoke the path from React and show the Lambda result in the browser.
+14. [ ] Make Spring call API Gateway with controlled timeout/errors. Source and unit test exist; bounded timeout, redeployment, and AWS evidence remain.
+15. [ ] Invoke the path from React and show the Lambda result in the browser. Source/build complete; redeployment and AWS evidence remain.
 
 Do not begin with CSS polishing or a large feature. The first proof must be the complete deployed walking skeleton. If it is not live by 23:59, continue only that work on 2 September morning and cut P2.
 

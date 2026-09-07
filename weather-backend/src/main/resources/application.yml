@@ -17,3 +17,13 @@ geoapify:
 
 weather:
     forecast-url: ${WEATHER_FORECAST_URL:}
+
+aws:
+    region: ${AWS_REGION:us-east-1}
+
+dynamodb:
+    users-table: ${USERS_TABLE:Users}
+
+jwt:
+    secret: ${JWT_SECRET:}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:15}
