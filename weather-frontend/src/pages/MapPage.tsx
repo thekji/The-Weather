@@ -630,11 +630,11 @@ export function MapPage() {
             ? selectedLocationIsStarred ? 'unstar' : 'star'
             : undefined
     return (
-        <section className="relative h-svh min-h-svh w-full" aria-label="Map">
-            <div className="relative isolate h-svh min-h-svh w-full overflow-hidden bg-[var(--soft-surface)]">
+        <section className="relative h-dvh min-h-0 w-full" aria-label="Map">
+            <div className="relative isolate h-dvh min-h-0 w-full overflow-hidden bg-[var(--soft-surface)]">
                 <div
                     ref={mapElementRef}
-                    className="z-[1] h-svh min-h-svh w-full font-[inherit] [&_.leaflet-control-attribution]:bg-white/80 [&_.leaflet-control-attribution]:text-[9px] [&_.leaflet-control-attribution]:text-[#6f7a88] [&_.weather-map-marker-wrap]:border-0 [&_.weather-map-marker-wrap]:bg-transparent [&_.weather-map-marker]:relative [&_.weather-map-marker]:block [&_.weather-map-marker]:h-9 [&_.weather-map-marker]:w-9 [&_.weather-map-marker]:rotate-[-45deg] [&_.weather-map-marker]:rounded-[50%_50%_50%_8px] [&_.weather-map-marker]:border-4 [&_.weather-map-marker]:border-white [&_.weather-map-marker]:bg-[var(--accent)] [&_.weather-map-marker]:shadow-[0_7px_16px_rgba(16,91,147,0.3)] [&_.weather-map-marker_span]:absolute [&_.weather-map-marker_span]:inset-[9px] [&_.weather-map-marker_span]:rounded-full [&_.weather-map-marker_span]:border-[3px] [&_.weather-map-marker_span]:border-white"
+                    className="weather-map z-[1] h-dvh min-h-0 w-full font-[inherit] [&_.leaflet-control-attribution]:bg-white/80 [&_.leaflet-control-attribution]:text-[9px] [&_.leaflet-control-attribution]:text-[#6f7a88] [&_.weather-map-marker-wrap]:border-0 [&_.weather-map-marker-wrap]:bg-transparent [&_.weather-map-marker]:relative [&_.weather-map-marker]:block [&_.weather-map-marker]:h-9 [&_.weather-map-marker]:w-9 [&_.weather-map-marker]:rotate-[-45deg] [&_.weather-map-marker]:rounded-[50%_50%_50%_8px] [&_.weather-map-marker]:border-4 [&_.weather-map-marker]:border-white [&_.weather-map-marker]:bg-[var(--accent)] [&_.weather-map-marker]:shadow-[0_7px_16px_rgba(16,91,147,0.3)] [&_.weather-map-marker_span]:absolute [&_.weather-map-marker_span]:inset-[9px] [&_.weather-map-marker_span]:rounded-full [&_.weather-map-marker_span]:border-[3px] [&_.weather-map-marker_span]:border-white"
                     aria-label="Interactive weather location map"
                 />
 
@@ -714,7 +714,7 @@ export function MapPage() {
 
                 {mapReady && !mapError && (
                     <>
-                        <div className="absolute bottom-[30px] left-[136px] z-[500] grid gap-2 max-[1025px]:bottom-[94px] max-[1025px]:left-4 max-[520px]:bottom-[90px] max-[520px]:left-3 max-[700px]:[.weather-modal~&]:hidden">
+                        <div className="map-bottom-control absolute bottom-[30px] left-[136px] z-[500] grid gap-2 max-[1025px]:left-4 max-[520px]:left-3 max-[700px]:[.weather-modal~&]:hidden">
                             {locationError && <p className="m-0 max-w-[260px] rounded-xl bg-[#ffeff1f5] px-3 py-[9px] text-[0.76rem] font-bold text-[#9f3340] shadow-[0_8px_22px_rgba(32,43,60,0.12)]" role="alert">{locationError}</p>}
                             <button className="glass-surface inline-flex min-h-[52px] cursor-pointer items-center justify-center gap-2.5 rounded-[18px] border border-white/90 px-[22px] text-[0.9rem] font-extrabold text-[var(--ink)] transition-transform active:not-disabled:scale-[0.94] disabled:cursor-wait disabled:opacity-60 max-[760px]:min-h-[46px] max-[760px]:rounded-2xl max-[760px]:px-4 max-[760px]:text-[0.8rem] max-[520px]:px-3.5 [&_svg]:h-[21px] [&_svg]:w-[21px] [&_svg]:text-[var(--accent)]" type="button" onClick={goToCurrentLocation} disabled={isLocating}>
                                 {isLocating
@@ -724,7 +724,7 @@ export function MapPage() {
                             </button>
                         </div>
 
-                        <div className="glass-surface absolute right-6 bottom-[30px] z-[500] overflow-hidden rounded-[17px] border border-[#d2dde5eb] bg-white/95 shadow-[0_14px_34px_rgba(32,43,60,0.15)] backdrop-blur-2xl min-[1025px]:max-[1100px]:right-5 max-[1025px]:right-4 max-[1025px]:bottom-[94px] max-[1025px]:rounded-[15px] max-[520px]:right-3 max-[520px]:bottom-[90px] [&_button+button]:border-t [&_button+button]:border-[#dde7ef]" aria-label="Map zoom controls">
+                        <div className="map-bottom-control glass-surface absolute right-6 bottom-[30px] z-[500] overflow-hidden rounded-[17px] border border-[#d2dde5eb] bg-white/95 shadow-[0_14px_34px_rgba(32,43,60,0.15)] backdrop-blur-2xl min-[1025px]:max-[1100px]:right-5 max-[1025px]:right-4 max-[1025px]:rounded-[15px] max-[520px]:right-3 [&_button+button]:border-t [&_button+button]:border-[#dde7ef]" aria-label="Map zoom controls">
                             <button className="grid h-[52px] w-[52px] cursor-pointer place-items-center border-0 bg-transparent p-0 text-[var(--ink)] transition-[transform,color,background-color] hover:bg-white/10 hover:text-[var(--accent)] active:scale-90 max-[760px]:h-[46px] max-[760px]:w-[46px] [&_svg]:h-[25px] [&_svg]:w-[25px] [&_svg]:stroke-[2.2]" type="button" aria-label="Zoom in" onClick={() => mapRef.current?.zoomIn()}>
                                 <Plus aria-hidden="true" />
                             </button>
@@ -737,7 +737,7 @@ export function MapPage() {
 
                 {selectedLocation && (
                     <aside
-                        className="weather-modal glass-surface-strong absolute top-28 right-6 z-[550] max-h-[calc(100svh-136px)] w-[min(900px,calc(100vw-48px))] overflow-y-auto overscroll-contain rounded-[28px] border border-[#d2dde5f5] bg-white/95 p-6 text-[var(--ink)] shadow-[0_24px_56px_rgba(32,43,60,0.2)] backdrop-blur-[18px] min-[1025px]:max-[1100px]:top-[108px] min-[1025px]:max-[1100px]:right-5 min-[1025px]:max-[1100px]:max-h-[calc(100svh-138px)] min-[1025px]:max-[1100px]:w-[min(620px,calc(100vw-156px))] max-[1025px]:fixed max-[1025px]:top-auto max-[1025px]:right-4 max-[1025px]:bottom-[94px] max-[1025px]:left-4 max-[1025px]:max-h-[min(70svh,calc(100svh-190px))] max-[1025px]:w-auto max-[1025px]:rounded-[21px] max-[1025px]:p-[21px] max-[430px]:right-3 max-[430px]:left-3 max-[430px]:p-4"
+                        className="weather-modal glass-surface-strong absolute top-28 right-6 z-[550] max-h-[calc(100dvh-136px)] w-[min(900px,calc(100vw-48px))] overflow-y-auto overscroll-contain rounded-[28px] border border-[#d2dde5f5] bg-white/95 p-6 text-[var(--ink)] shadow-[0_24px_56px_rgba(32,43,60,0.2)] backdrop-blur-[18px] min-[1025px]:max-[1100px]:top-[108px] min-[1025px]:max-[1100px]:right-5 min-[1025px]:max-[1100px]:max-h-[calc(100dvh-138px)] min-[1025px]:max-[1100px]:w-[min(620px,calc(100vw-156px))] max-[1025px]:fixed max-[1025px]:top-auto max-[1025px]:right-4 max-[1025px]:bottom-[var(--mobile-nav-clearance)] max-[1025px]:left-4 max-[1025px]:max-h-[min(70dvh,calc(100dvh-var(--mobile-nav-clearance)-96px))] max-[1025px]:w-auto max-[1025px]:rounded-[21px] max-[1025px]:p-[21px] max-[430px]:right-3 max-[430px]:left-3 max-[430px]:p-4"
                         role="dialog"
                         aria-modal="false"
                         aria-labelledby="weather-modal-title"

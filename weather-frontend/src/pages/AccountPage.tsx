@@ -52,14 +52,15 @@ export function AccountPage() {
     const detailTermClassName = 'flex items-center gap-2.5 text-[0.78rem] font-extrabold text-[var(--tertiary-ink)] [&_svg]:size-[19px] [&_svg]:stroke-2 [&_svg]:text-[var(--accent)]'
 
     return (
-        <section className="relative z-[1] mx-auto flex w-full max-w-[1600px] flex-col" aria-labelledby="account-title">
+        <section className="relative z-[1] mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col" aria-labelledby="account-title">
             <header className="mb-[clamp(20px,3.5vh,34px)] shrink-0">
                 <p className="mt-0 mb-[9px] w-fit text-xs font-extrabold tracking-[0.14em] text-[var(--eyebrow)] uppercase">Profile</p>
                 <h1 className="m-0 w-fit text-[clamp(2.25rem,4vw,3.75rem)] leading-[0.98] font-extrabold tracking-[0.01em] text-[var(--ink)] [@media(max-height:720px)_and_(min-width:761px)]:text-[clamp(2.25rem,6vh,3.35rem)] max-[760px]:text-[clamp(2.2rem,11vw,3.25rem)]" id="account-title">Account</h1>
                 <p className="mt-[15px] mb-0 text-base leading-[1.6] text-[var(--muted)]">Your basic account information.</p>
             </header>
 
-            <article className="grid grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)] gap-5 bg-transparent pt-5 max-[1100px]:grid-cols-1 max-[430px]:pt-2.5">
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1">
+                <article className="grid grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)] gap-5 bg-transparent pt-5 max-[1100px]:grid-cols-1 max-[430px]:pt-2.5">
                 <section className={panelClassName} aria-labelledby="basic-information-title">
                     <div className="flex items-center gap-5 border-b border-[#c7d1db9e] pb-[22px] max-[430px]:gap-3.5">
                         <div className="grid size-[72px] shrink-0 place-items-center rounded-full border border-[#1596f521] bg-white/70 text-[1.35rem] font-extrabold text-[var(--accent)] max-[430px]:size-[60px]" aria-hidden="true">{initials(user.name)}</div>
@@ -151,7 +152,8 @@ export function AccountPage() {
                         </button>
                     </div>
                 </section>
-            </article>
+                </article>
+            </div>
 
             <PageFooterNote />
         </section>
