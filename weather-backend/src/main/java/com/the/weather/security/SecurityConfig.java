@@ -45,6 +45,8 @@ public class SecurityConfig {
                                 "/api/config",
                                 "/api/locations/**",
                                 "/api/weather",
+                                "/api/weather/hourly",
+                                "/api/weather/daily",
                                 "/api/system/ping",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",

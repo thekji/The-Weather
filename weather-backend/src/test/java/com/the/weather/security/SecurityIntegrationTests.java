@@ -68,6 +68,21 @@ class SecurityIntegrationTests {
     }
 
     @Test
+    void starRoutesRejectAMissingJwt() throws Exception {
+        mockMvc.perform(get("/api/stars"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void starRoutesRejectAnInvalidJwt() throws Exception {
+        mockMvc.perform(get("/api/stars")
+                        .header("Authorization", "Bearer not-a-valid-jwt"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
     void jwtWithInvalidSignatureIsRejected() throws Exception {
         JwtService otherSigner = new JwtService(
                 "different-test-secret-with-more-than-32-bytes",

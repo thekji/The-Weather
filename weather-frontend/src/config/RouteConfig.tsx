@@ -33,14 +33,26 @@ function HomeRoute() {
 }
 
 function PageLayout({ page, children, fullScreen = false }: PageLayoutProps) {
+    const isAccountPage = page === 'account'
+    const isFramedPage = page === 'account' || page === 'starred'
     const pageContentClassName = [
-        'page-content',
-        fullScreen ? 'page-content--map' : '',
-        page === 'account' || page === 'starred' ? 'page-content--gradient' : '',
+        'flex min-h-svh min-w-0 pr-[clamp(28px,6vw,86px)] pl-36 min-[1025px]:max-[1100px]:pr-10 min-[1025px]:max-[1100px]:pl-[132px] max-[1025px]:px-6 max-[760px]:px-5 max-[430px]:px-[15px] max-[350px]:px-2.5',
+        fullScreen
+            ? 'min-h-svh p-0! max-[760px]:p-0!'
+            : isAccountPage
+                ? 'framed-theme min-h-dvh py-[clamp(16px,2.5vh,24px)] max-[1025px]:pb-28 max-[760px]:pt-4'
+                : isFramedPage
+                ? 'framed-theme h-dvh min-h-0 overflow-hidden py-[clamp(16px,2.5vh,24px)] max-[1025px]:pb-28 max-[760px]:pt-4'
+                    : 'py-[clamp(42px,6vw,76px)] [@media(max-height:720px)_and_(min-width:761px)]:py-7 max-[760px]:pt-[42px] max-[760px]:pb-28',
+        isAccountPage
+            ? 'relative isolate bg-transparent'
+            : isFramedPage
+                ? 'relative isolate overflow-hidden bg-transparent'
+                : '',
     ].filter(Boolean).join(' ')
 
     return (
-        <div className="app-shell">
+        <div className={`relative block min-h-svh w-full bg-[var(--app-background)] text-[var(--ink)] ${isAccountPage ? '' : 'overflow-hidden max-[760px]:overflow-visible'}`}>
             <Sidebar currentPage={page} />
 
             <main className={pageContentClassName}>

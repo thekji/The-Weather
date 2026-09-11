@@ -1,8 +1,18 @@
+@import "tailwindcss";
+
 @font-face {
     font-family: "Geist";
     src: url("./assets/Geist/Geist-ExtraLight.ttf") format("truetype");
     font-style: normal;
     font-weight: 200;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Geist";
+    src: url("./assets/Geist/Geist-Light.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 300;
     font-display: swap;
 }
 
@@ -24,6 +34,30 @@
 
 @font-face {
     font-family: "Geist";
+    src: url("./assets/Geist/Geist-SemiBold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Geist";
+    src: url("./assets/Geist/Geist-SemiBoldItalic.ttf") format("truetype");
+    font-style: italic;
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Geist";
+    src: url("./assets/Geist/Geist-Bold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Geist";
     src: url("./assets/Geist/Geist-ExtraBold.ttf") format("truetype");
     font-style: normal;
     font-weight: 800;
@@ -32,6 +66,7 @@
 
 :root {
     font-family: "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 106.25%;
     color: #202b3c;
     background: #ffffff;
     letter-spacing: 0.018em;
@@ -43,6 +78,49 @@
 
 * {
     box-sizing: border-box;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+    border-radius: 999px;
+    background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: linear-gradient(
+        135deg,
+        var(--scrollbar-thumb-highlight),
+        var(--scrollbar-thumb)
+    );
+    background-clip: padding-box;
+    box-shadow: 0 2px 8px rgba(31, 86, 132, 0.18);
+}
+
+*::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        135deg,
+        var(--scrollbar-thumb-highlight),
+        var(--scrollbar-thumb-hover)
+    );
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 html,
@@ -64,12 +142,81 @@ select {
     font: inherit;
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--ink);
+    caret-color: var(--ink);
+    box-shadow: 0 0 0 1000px var(--autofill-background) inset !important;
+    transition: background-color 9999s ease-out;
+}
+
+.leaflet-container {
+    font-family: "Geist", ui-sans-serif, sans-serif;
+}
+
 button,
 a {
     -webkit-tap-highlight-color: transparent;
 }
 
+button:active:not(:disabled) {
+    transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button:active:not(:disabled) {
+        transform: none;
+    }
+}
+
 ::selection {
     color: #ffffff;
     background: #1596f5;
+}
+
+.glass-surface {
+    border-color: var(--glass-border) !important;
+    background: var(--glass-surface-background) !important;
+    box-shadow: var(--glass-card-shadow) !important;
+    backdrop-filter: blur(30px) saturate(165%) contrast(103%) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(165%) contrast(103%) !important;
+}
+
+.glass-surface-strong {
+    border-color: var(--glass-border) !important;
+    background: var(--glass-surface-strong-background) !important;
+    box-shadow: var(--glass-card-shadow) !important;
+    backdrop-filter: blur(34px) saturate(170%) contrast(104%) !important;
+    -webkit-backdrop-filter: blur(34px) saturate(170%) contrast(104%) !important;
+}
+
+.glass-inset {
+    border-color: var(--glass-border) !important;
+    background: var(--glass-inset-background) !important;
+    box-shadow: var(--glass-panel-shadow) !important;
+}
+
+.glass-grid > div {
+    border-color: var(--glass-border) !important;
+    background: var(--glass-grid-background) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.liquid-glass {
+    border-color: var(--glass-border) !important;
+    background-clip: padding-box !important;
+    box-shadow: var(--glass-card-shadow) !important;
+    backdrop-filter: blur(30px) saturate(165%) contrast(103%);
+    -webkit-backdrop-filter: blur(30px) saturate(165%) contrast(103%);
+    isolation: isolate;
+    overflow: clip;
+}
+
+.scroll-glass-card {
+    border-color: var(--glass-border) !important;
+    background-clip: padding-box !important;
+    box-shadow: var(--scroll-card-shadow) !important;
+    isolation: isolate;
+    overflow: clip;
 }

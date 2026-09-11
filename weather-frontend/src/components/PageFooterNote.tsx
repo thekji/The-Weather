@@ -1,0 +1,22 @@
+import { Moon, Sun } from 'lucide-react'
+import { useTheme } from '../theme/theme'
+
+export function PageFooterNote() {
+    const { resolvedTheme } = useTheme()
+
+    return (
+        <aside
+            className="liquid-glass mt-[clamp(18px,3vh,30px)] grid shrink-0 grid-cols-[auto_minmax(0,1fr)_minmax(80px,18%)] items-center gap-[18px] rounded-3xl border border-[var(--footer-border)]! [background:var(--footer-background)] px-[26px] py-[clamp(14px,2vh,18px)] [box-shadow:var(--glass-footer-shadow)] max-[1025px]:grid-cols-[auto_minmax(0,1fr)] max-[1025px]:px-5 max-[1025px]:py-[17px] max-[430px]:grid-cols-[38px_minmax(0,1fr)] max-[430px]:gap-3 max-[430px]:rounded-[20px] [@media(max-height:640px)]:hidden"
+            aria-label="Saved locations tip"
+        >
+            <span className="grid size-12 place-items-center text-[var(--footer-icon)] drop-shadow-[0_4px_10px_rgba(7,31,53,0.18)] max-[430px]:size-[34px] [&_svg]:size-10 [&_svg]:stroke-[1.8] max-[430px]:[&_svg]:size-[34px]" aria-hidden="true">
+                {resolvedTheme === 'night' ? <Moon /> : <Sun />}
+            </span>
+            <span className="grid gap-[5px] text-[0.83rem] leading-[1.4] text-[var(--footer-ink)] [&_strong]:text-[0.96rem] [&_strong]:text-[var(--footer-strong-ink)]">
+                <strong>Your favourite places, always within reach</strong>
+                <span>Check your saved locations and explore them on the map.</span>
+            </span>
+            <span className="min-h-14 max-[1025px]:hidden" aria-hidden="true" />
+        </aside>
+    )
+}

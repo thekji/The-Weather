@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.the.weather.auth.controller.AuthController;
 import com.the.weather.auth.exception.DuplicateEmailException;
 import com.the.weather.auth.exception.InvalidCredentialsException;
+import com.the.weather.star.controller.StarController;
+import com.the.weather.star.exception.InvalidStarRequestException;
 
-@RestControllerAdvice(assignableTypes = AuthController.class)
+@RestControllerAdvice(assignableTypes = {AuthController.class, StarController.class})
 public class ApiExceptionHandler {
 
     private final Clock clock;
@@ -39,6 +41,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(DuplicateEmailException.class)
     ResponseEntity<ApiError> duplicateEmail(DuplicateEmailException exception) {
         return response(HttpStatus.CONFLICT, "EMAIL_ALREADY_EXISTS", exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidStarRequestException.class)
+    ResponseEntity<ApiError> invalidStarRequest() {
+        return response(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Invalid request");
     }
 
     @ExceptionHandler(Exception.class)

@@ -31,8 +31,17 @@ class OpenApiDocumentationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.info.title").value("TheWeather API"))
                 .andExpect(jsonPath("$.info.version").value("v1"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type")
+                        .value("http"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme")
+                        .value("bearer"))
                 .andExpect(jsonPath("$.paths['/api/weather']").exists())
+                .andExpect(jsonPath("$.paths['/api/weather/hourly']").exists())
+                .andExpect(jsonPath("$.paths['/api/weather/daily']").exists())
                 .andExpect(jsonPath("$.paths['/api/locations/search']").exists())
+                .andExpect(jsonPath("$.paths['/api/stars'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/stars'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/stars/{locationID}'].delete").exists())
                 .andExpect(jsonPath("$.paths['/api/system/ping']").exists());
     }
 

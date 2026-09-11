@@ -8,18 +8,24 @@ export type LocationSearchResult = {
     latitude: number
 }
 
-function isLocationSearchResult(value: unknown): value is LocationSearchResult {
+export function isLocationSearchResult(value: unknown): value is LocationSearchResult {
     if (typeof value !== 'object' || value === null) return false
 
     const location = value as Record<string, unknown>
     return typeof location.locationID === 'string'
-        && location.locationID.length > 0
+        && location.locationID.trim().length > 0
         && typeof location.name === 'string'
-        && location.name.length > 0
+        && location.name.trim().length > 0
         && typeof location.address === 'string'
-        && location.address.length > 0
+        && location.address.trim().length > 0
         && typeof location.latitude === 'number'
+        && Number.isFinite(location.latitude)
+        && location.latitude >= -90
+        && location.latitude <= 90
         && typeof location.longitude === 'number'
+        && Number.isFinite(location.longitude)
+        && location.longitude >= -180
+        && location.longitude <= 180
 }
 
 export async function reverseGeocode(

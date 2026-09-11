@@ -27,6 +27,8 @@ DELETE /api/posts/{postID}/image
 
 WEATHER
 GET /api/weather?latitude=&longitude=&timezone=
+GET /api/weather/hourly?latitude=&longitude=
+GET /api/weather/daily?latitude=&longitude=
 GET /api/weather/history?latitude=&longitude=&date=&timezone=
 
 ANALYTICS
