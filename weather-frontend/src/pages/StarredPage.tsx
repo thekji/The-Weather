@@ -126,22 +126,22 @@ export function StarredPage() {
         : `${locations.length} saved ${locations.length === 1 ? 'place' : 'places'}`
 
     return (
-        <section className="relative z-[1] mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col" aria-labelledby="starred-title">
-            <header className="mb-[clamp(20px,3.5vh,34px)] flex shrink-0 items-start justify-between gap-7 max-[760px]:mb-[27px] max-[430px]:block">
+        <section className="relative z-[1] mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col max-[760px]:h-auto" aria-labelledby="starred-title">
+            <header className="mb-[clamp(20px,3.5vh,34px)] flex shrink-0 items-start justify-between gap-7 max-[760px]:mb-4 max-[430px]:block">
                 <div className="min-w-0 flex-1">
-                    <p className="mt-0 mb-[9px] w-fit text-xs font-extrabold tracking-[0.14em] text-[var(--eyebrow)] uppercase">Saved locations</p>
+                    <p className="mt-0 mb-[9px] w-fit text-xs font-extrabold tracking-[0.14em] text-[var(--eyebrow)] uppercase max-[760px]:mb-1.5 max-[760px]:text-[0.68rem]">Saved locations</p>
                     <div className="flex items-center gap-[18px] max-[760px]:flex-wrap max-[760px]:gap-3">
-                        <h1 className="m-0 w-fit text-[clamp(2.25rem,4vw,3.75rem)] leading-[0.98] font-extrabold tracking-[0.01em] text-[var(--ink)] [@media(max-height:720px)_and_(min-width:761px)]:text-[clamp(2.25rem,6vh,3.35rem)] max-[760px]:text-[clamp(2.2rem,11vw,3.25rem)]" id="starred-title">Starred places</h1>
-                        <p className="mt-[5px] mb-0 shrink-0 rounded-full border border-[#1596f53d] bg-white/45 px-3.5 py-[9px] text-[0.78rem] font-extrabold text-[var(--accent)] backdrop-blur-[18px] backdrop-saturate-150 max-[430px]:mt-[18px] max-[430px]:inline-block" aria-label={countLabel}>
+                        <h1 className="m-0 w-fit text-[clamp(2.25rem,4vw,3.75rem)] leading-[0.98] font-extrabold tracking-[0.01em] text-[var(--ink)] [@media(max-height:720px)_and_(min-width:761px)]:text-[clamp(2.25rem,6vh,3.35rem)] max-[760px]:text-[clamp(2rem,9vw,2.65rem)]" id="starred-title">Starred places</h1>
+                        <p className="mt-[5px] mb-0 shrink-0 rounded-full border border-[#1596f53d] bg-white/45 px-3.5 py-[9px] text-[0.78rem] font-extrabold text-[var(--accent)] backdrop-blur-[18px] backdrop-saturate-150 max-[760px]:mt-0 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:text-[0.7rem] max-[430px]:inline-block" aria-label={countLabel}>
                             <span>{isLoading || loadError ? '—' : locations.length}</span>{' '}
                             {locations.length === 1 ? 'place' : 'places'}
                         </p>
                     </div>
-                    <p className="mt-[15px] mb-0 text-base leading-[1.6] text-[var(--muted)]">A quick look at the places you care about.</p>
+                    <p className="mt-[15px] mb-0 text-base leading-[1.6] text-[var(--muted)] max-[760px]:mt-2.5 max-[760px]:text-[0.88rem] max-[760px]:leading-[1.45]">A quick look at the places you care about.</p>
                 </div>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1">
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 max-[760px]:flex-none max-[760px]:overflow-visible max-[760px]:pr-0">
                 <div className="mb-2 flex justify-start py-0.5">
                     <button
                         type="button"

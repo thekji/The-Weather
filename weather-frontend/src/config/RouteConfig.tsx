@@ -39,13 +39,13 @@ function PageLayout({ page, children, fullScreen = false }: PageLayoutProps) {
         fullScreen
             ? 'p-0! max-[760px]:p-0!'
             : isFramedPage
-                ? 'framed-theme overflow-hidden py-[clamp(16px,2.5vh,24px)] max-[1025px]:pb-[var(--mobile-nav-clearance)] max-[760px]:pt-4'
+                ? 'framed-theme overflow-hidden py-[clamp(16px,2.5vh,24px)] max-[1025px]:pb-[var(--mobile-nav-clearance)] max-[760px]:h-auto max-[760px]:min-h-dvh max-[760px]:overflow-visible max-[760px]:pt-4'
                     : 'py-[clamp(42px,6vw,76px)] [@media(max-height:720px)_and_(min-width:761px)]:py-7 max-[760px]:pt-[42px] max-[760px]:pb-28',
         isFramedPage ? 'relative isolate bg-transparent' : '',
     ].filter(Boolean).join(' ')
 
     return (
-        <div className="relative block h-dvh min-h-0 w-full overflow-hidden bg-[var(--app-background)] text-[var(--ink)]">
+        <div className={`relative block h-dvh min-h-0 w-full overflow-hidden bg-[var(--app-background)] text-[var(--ink)] ${isFramedPage ? 'max-[760px]:h-auto max-[760px]:min-h-dvh max-[760px]:overflow-visible' : ''}`}>
             <Sidebar currentPage={page} />
 
             <main className={pageContentClassName}>
