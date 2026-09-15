@@ -31,7 +31,7 @@ class GeoapifyLocationClientTests {
                         "https://api.geoapify.test/v1/geocode/search?")))
                 .andExpect(queryParam("text", "RMIT%20Saigon%20South"))
                 .andExpect(queryParam("format", "json"))
-                .andExpect(queryParam("limit", "15"))
+                .andExpect(queryParam("limit", "20"))
                 .andExpect(queryParam("apiKey", "test-key"))
                 .andRespond(withSuccess("""
                         {

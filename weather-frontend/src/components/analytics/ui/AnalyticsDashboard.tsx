@@ -1,7 +1,7 @@
 import {
     BarChart3,
     FileText,
-    Gauge,
+    Lightbulb,
     MapPin,
     RefreshCw,
     Star,
@@ -60,29 +60,57 @@ function DistributionRow({ item, maximumCount }: {
     item: RatingDistribution
     maximumCount: number
 }) {
-    const width = maximumCount === 0 ? 0 : (item.count / maximumCount) * 100
-    const barStyle = { width: `${width}%` } satisfies CSSProperties
+    const height = maximumCount === 0 ? 0 : (item.count / maximumCount) * 100
+    const barStyle = { height: `${height}%` } satisfies CSSProperties
     const postLabel = item.count === 1 ? 'post' : 'posts'
+    const barColors = [
+        'from-[#f472b6] to-[#f9a8d4]',
+        'from-[#fb923c] to-[#fdba74]',
+        'from-[#fbbf24] to-[#fde68a]',
+        'from-[#38bdf8] to-[#7dd3fc]',
+        'from-[#168ff0] to-[#60a5fa]',
+    ]
 
     return (
         <div
-            className="grid grid-cols-[28px_minmax(0,1fr)_minmax(46px,auto)] items-center gap-3 max-[430px]:gap-2"
+            className="grid h-full min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-3"
             role="img"
             aria-label={`${item.rating} star rating: ${item.count} ${postLabel}`}
         >
-            <span className="inline-flex items-center justify-center gap-1 text-sm font-extrabold text-[var(--secondary-ink)]" aria-hidden="true">
+            <div className="flex min-h-0 flex-col justify-end" aria-hidden="true">
+                <span className="mb-2 text-center text-sm font-extrabold tabular-nums text-[var(--ink)]">
+                    {item.count.toLocaleString()}
+                </span>
+                <span
+                    className={`mx-auto block w-[min(66px,72%)] rounded-t-xl bg-gradient-to-t ${barColors[item.rating - 1]} shadow-[0_8px_20px_rgba(21,150,245,0.12)] transition-[height] duration-500 motion-reduce:transition-none ${item.count > 0 ? 'min-h-1.5' : ''}`}
+                    style={barStyle}
+                />
+            </div>
+            <span className="inline-flex items-center justify-center gap-1 text-sm font-bold text-[var(--secondary-ink)]" aria-hidden="true">
                 {item.rating}
                 <Star className="size-3 fill-current text-amber-400" />
             </span>
-            <span className="h-3 overflow-hidden rounded-full bg-[var(--soft-surface)]" aria-hidden="true">
-                <span
-                    className={`block h-full rounded-full bg-gradient-to-r from-[#1596f5] to-[#71c7fa] transition-[width] duration-500 motion-reduce:transition-none ${item.count > 0 ? 'min-w-1.5' : ''}`}
-                    style={barStyle}
+        </div>
+    )
+}
+
+function AverageStars({ value }: { value: number | null }) {
+    const filledStars = value === null ? 0 : Math.round(value)
+
+    return (
+        <div
+            className="mt-3 flex items-center gap-1.5"
+            role="img"
+            aria-label={value === null ? 'No average rating available' : `${value.toFixed(2)} out of 5 stars`}
+        >
+            {[1, 2, 3, 4, 5].map((rating) => (
+                <Star
+                    className={`size-5 ${rating <= filledStars ? 'fill-amber-400 text-amber-400' : 'fill-transparent text-[var(--line)]'}`}
+                    strokeWidth={2.2}
+                    aria-hidden="true"
+                    key={rating}
                 />
-            </span>
-            <span className="text-right text-sm font-bold tabular-nums text-[var(--ink)]" aria-hidden="true">
-                {item.count.toLocaleString()}
-            </span>
+            ))}
         </div>
     )
 }
@@ -92,76 +120,104 @@ function SummaryContent({ summary }: { summary: AnalyticsSummary }) {
         0,
         ...summary.ratingDistribution.map((item) => item.count),
     )
-    const panelClassName = 'day-starred-glass rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-sm max-[560px]:rounded-2xl max-[560px]:p-4'
+    const panelClassName = 'day-starred-glass rounded-[26px] border border-[var(--line)] bg-[var(--surface)] p-[clamp(18px,2.1vw,28px)] shadow-sm max-[560px]:rounded-2xl'
+    const maximumLocationCount = Math.max(
+        0,
+        ...summary.topLocations.map((location) => location.postCount),
+    )
+    const locationColors = [
+        'from-[#f472b6] to-[#f9a8d4]',
+        'from-[#fb923c] to-[#fdba74]',
+        'from-[#fbbf24] to-[#fde68a]',
+        'from-[#38bdf8] to-[#7dd3fc]',
+        'from-[#168ff0] to-[#60a5fa]',
+    ]
 
     return (
-        <div className="grid gap-5 pb-1">
-            <div className="grid grid-cols-2 gap-5 max-[680px]:grid-cols-1 max-[680px]:gap-3">
-                <article className={`${panelClassName} flex min-h-36 items-center gap-5`} aria-labelledby="total-posts-title">
-                    <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]" aria-hidden="true">
-                        <FileText className="size-6" />
+        <div className="grid gap-5 pb-1 max-[760px]:gap-3.5">
+            <div className="grid grid-cols-2 gap-5 max-[760px]:grid-cols-1 max-[760px]:gap-3.5">
+                <article className={`${panelClassName} relative isolate flex min-h-40 items-center gap-6 overflow-hidden max-[430px]:items-start max-[430px]:gap-4`} aria-labelledby="total-posts-title">
+                    <span className="pointer-events-none absolute -right-12 -bottom-20 -z-10 size-56 rounded-full bg-pink-400/10 blur-2xl" aria-hidden="true" />
+                    <span className="grid size-16 shrink-0 place-items-center rounded-[22px] bg-gradient-to-br from-pink-300/35 to-pink-500/15 text-pink-500 ring-1 ring-pink-300/20 max-[430px]:size-12 max-[430px]:rounded-2xl" aria-hidden="true">
+                        <FileText className="size-8 max-[430px]:size-6" />
                     </span>
-                    <div>
-                        <h2 className="m-0 text-sm font-bold text-[var(--secondary-ink)]" id="total-posts-title">Total Posts</h2>
-                        <p className="mt-2 mb-0 text-[clamp(2rem,4vw,3rem)] leading-none font-extrabold tracking-tight tabular-nums text-[var(--ink)]">
+                    <div className="min-w-0">
+                        <h2 className="m-0 text-base font-extrabold text-[var(--secondary-ink)]" id="total-posts-title">Total Posts</h2>
+                        <p className="mt-2 mb-0 text-[clamp(2.35rem,4vw,3.25rem)] leading-none font-extrabold tracking-tight tabular-nums text-[var(--ink)]">
                             {summary.totalPosts.toLocaleString()}
                         </p>
+                        <p className="mt-3 mb-0 max-w-md text-xs leading-relaxed font-medium text-[var(--muted)]">All community weather posts shared across the platform.</p>
                     </div>
                 </article>
 
-                <article className={`${panelClassName} flex min-h-36 items-center gap-5`} aria-labelledby="average-accuracy-title">
-                    <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-amber-400/15 text-amber-500" aria-hidden="true">
-                        <Gauge className="size-7" />
+                <article className={`${panelClassName} relative isolate flex min-h-40 items-center gap-6 overflow-hidden max-[430px]:items-start max-[430px]:gap-4`} aria-labelledby="average-accuracy-title">
+                    <span className="pointer-events-none absolute -right-10 -bottom-16 -z-10 size-56 rounded-full bg-amber-300/15 blur-2xl" aria-hidden="true" />
+                    <span className="grid size-16 shrink-0 place-items-center rounded-[22px] bg-gradient-to-br from-amber-200/45 to-amber-400/15 text-amber-500 ring-1 ring-amber-300/20 max-[430px]:size-12 max-[430px]:rounded-2xl" aria-hidden="true">
+                        <Star className="size-8 max-[430px]:size-6" />
                     </span>
-                    <div>
-                        <h2 className="m-0 text-sm font-bold text-[var(--secondary-ink)]" id="average-accuracy-title">Average Weather Accuracy</h2>
-                        <p className="mt-2 mb-0 text-[clamp(2rem,4vw,3rem)] leading-none font-extrabold tracking-tight tabular-nums text-[var(--ink)]">
+                    <div className="min-w-0">
+                        <h2 className="m-0 text-base font-extrabold text-[var(--secondary-ink)]" id="average-accuracy-title">Average Weather Accuracy</h2>
+                        <p className="mt-2 mb-0 text-[clamp(2.35rem,4vw,3.25rem)] leading-none font-extrabold tracking-tight tabular-nums text-[var(--ink)]">
                             {summary.averageWeatherAccuracy === null
                                 ? 'N/A'
-                                : <>{summary.averageWeatherAccuracy.toFixed(2)} <small className="text-base font-bold text-[var(--muted)]">/ 5</small></>}
+                                : <>{summary.averageWeatherAccuracy.toFixed(1)} <small className="text-lg font-bold text-[var(--muted)]">/ 5</small></>}
                         </p>
+                        <AverageStars value={summary.averageWeatherAccuracy} />
+                        <p className="mt-3 mb-0 max-w-md text-xs leading-relaxed font-medium text-[var(--muted)]">The community’s average accuracy rating for forecasts powered by Open-Meteo.</p>
                     </div>
                 </article>
             </div>
 
-            <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)] gap-5 max-[900px]:grid-cols-1 max-[900px]:gap-3">
+            <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] gap-5 max-[900px]:grid-cols-1 max-[900px]:gap-3.5">
                 <section className={panelClassName} aria-labelledby="rating-distribution-title">
-                    <div className="mb-6 flex items-center gap-3">
-                        <span className="grid size-9 place-items-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent)]" aria-hidden="true">
-                            <BarChart3 className="size-5" />
+                    <div className="mb-5 flex items-start gap-3.5">
+                        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-pink-300/35 to-pink-500/15 text-pink-500" aria-hidden="true">
+                            <BarChart3 className="size-6" />
                         </span>
                         <div>
-                            <h2 className="m-0 text-base font-bold text-[var(--ink)]" id="rating-distribution-title">Weather Accuracy Distribution</h2>
-                            <p className="mt-1 mb-0 text-xs text-[var(--muted)]">Community ratings from 1 to 5.</p>
+                            <h2 className="m-0 text-lg font-extrabold text-[var(--ink)]" id="rating-distribution-title">Weather Accuracy Distribution</h2>
+                            <p className="mt-1 mb-0 text-xs leading-relaxed font-medium text-[var(--muted)]">How community members rate the accuracy of our Open-Meteo forecasts.</p>
                         </div>
                     </div>
-                    <div className="grid gap-4">
+                    <div className="relative h-64 rounded-2xl border border-[var(--line)] bg-[linear-gradient(to_bottom,transparent_calc(25%-1px),var(--line)_25%,transparent_calc(25%+1px),transparent_calc(50%-1px),var(--line)_50%,transparent_calc(50%+1px),transparent_calc(75%-1px),var(--line)_75%,transparent_calc(75%+1px))] px-3 pt-3 pb-2 max-[430px]:h-56 max-[430px]:px-1.5">
+                        <div className="grid h-full grid-cols-5 gap-2 border-b border-[var(--line)] max-[430px]:gap-0.5">
                         {summary.ratingDistribution.map((item) => (
                             <DistributionRow item={item} maximumCount={maximumRatingCount} key={item.rating} />
                         ))}
+                        </div>
                     </div>
                 </section>
 
                 <section className={panelClassName} aria-labelledby="top-locations-title">
-                    <div className="mb-5 flex items-center gap-3">
-                        <span className="grid size-9 place-items-center rounded-xl bg-pink-400/15 text-pink-500" aria-hidden="true">
-                            <MapPin className="size-5" />
+                    <div className="mb-5 flex items-start gap-3.5">
+                        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-pink-300/35 to-pink-500/15 text-pink-500" aria-hidden="true">
+                            <MapPin className="size-6" />
                         </span>
                         <div>
-                            <h2 className="m-0 text-base font-bold text-[var(--ink)]" id="top-locations-title">Most Active Locations</h2>
-                            <p className="mt-1 mb-0 text-xs text-[var(--muted)]">Places with the most posts.</p>
+                            <h2 className="m-0 text-lg font-extrabold text-[var(--ink)]" id="top-locations-title">Most Active Locations</h2>
+                            <p className="mt-1 mb-0 text-xs leading-relaxed font-medium text-[var(--muted)]">Locations where the community shares the most weather reviews.</p>
                         </div>
                     </div>
 
                     {summary.topLocations.length > 0 ? (
-                        <ol className="m-0 grid list-none gap-2 p-0">
+                        <ol className="m-0 grid list-none gap-3 p-0">
                             {summary.topLocations.map((location, index) => (
-                                <li className="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--soft-surface)] px-3.5 py-3" key={`${location.locationName}-${index}`}>
-                                    <span className="grid size-8 place-items-center rounded-xl bg-[var(--surface)] text-xs font-extrabold text-[var(--accent)]" aria-label={`Rank ${index + 1}`}>{index + 1}</span>
-                                    <span className="min-w-0 truncate text-sm font-bold text-[var(--ink)]">{location.locationName}</span>
-                                    <span className="text-xs font-bold whitespace-nowrap text-[var(--muted)]">
-                                        <strong className="text-sm tabular-nums text-[var(--ink)]">{location.postCount.toLocaleString()}</strong> {location.postCount === 1 ? 'post' : 'posts'}
-                                    </span>
+                                <li className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-3 rounded-2xl px-1 py-1.5" key={`${location.locationName}-${index}`}>
+                                    <span className={`grid size-9 place-items-center rounded-full bg-gradient-to-br ${locationColors[index % locationColors.length]} text-xs font-extrabold text-slate-900 shadow-sm`} aria-label={`Rank ${index + 1}`}>{index + 1}</span>
+                                    <div className="min-w-0">
+                                        <div className="mb-2 flex items-baseline justify-between gap-3">
+                                            <span className="min-w-0 truncate text-sm font-extrabold text-[var(--ink)]">{location.locationName}</span>
+                                            <span className="shrink-0 text-xs font-bold whitespace-nowrap text-[var(--muted)]">
+                                                <strong className="text-sm tabular-nums text-[var(--ink)]">{location.postCount.toLocaleString()}</strong> {location.postCount === 1 ? 'post' : 'posts'}
+                                            </span>
+                                        </div>
+                                        <div className="h-2 overflow-hidden rounded-full bg-[var(--soft-surface)]" aria-hidden="true">
+                                            <span
+                                                className={`block h-full rounded-full bg-gradient-to-r ${locationColors[index % locationColors.length]}`}
+                                                style={{ width: `${maximumLocationCount === 0 ? 0 : (location.postCount / maximumLocationCount) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
                                 </li>
                             ))}
                         </ol>
@@ -170,6 +226,16 @@ function SummaryContent({ summary }: { summary: AnalyticsSummary }) {
                     )}
                 </section>
             </div>
+
+            <aside className="day-starred-glass grid grid-cols-[48px_minmax(0,1fr)] items-center gap-4 rounded-[24px] border border-[var(--line)] bg-[var(--surface)] px-6 py-4 shadow-sm max-[560px]:grid-cols-[40px_minmax(0,1fr)] max-[560px]:gap-3 max-[560px]:rounded-2xl max-[560px]:px-4" aria-label="About these analytics">
+                <span className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-pink-300/35 to-pink-500/15 text-pink-500 max-[560px]:size-10" aria-hidden="true">
+                    <Lightbulb className="size-6" />
+                </span>
+                <div>
+                    <strong className="text-sm font-extrabold text-[var(--ink)]">Community-powered insights</strong>
+                    <p className="mt-1 mb-0 text-xs leading-relaxed font-medium text-[var(--muted)]">These insights come from community weather reviews. Every shared post helps show how our forecasts perform across more locations.</p>
+                </div>
+            </aside>
         </div>
     )
 }
@@ -260,7 +326,7 @@ export function AnalyticsDashboard() {
                 <div className="min-w-0 flex-1">
                     <p className="mt-0 mb-[9px] w-fit text-xs font-extrabold tracking-[0.14em] text-[var(--eyebrow)] uppercase max-[760px]:mb-1.5 max-[760px]:text-[0.68rem]">Community insights</p>
                     <h1 className="m-0 w-fit text-[clamp(2.25rem,4vw,3.75rem)] leading-[0.98] font-extrabold tracking-[0.01em] text-[var(--ink)] [@media(max-height:720px)_and_(min-width:761px)]:text-[clamp(2.25rem,6vh,3.35rem)] max-[760px]:text-[clamp(2rem,9vw,2.65rem)]" id="analytics-title">Analytics</h1>
-                    <p className="mt-[15px] mb-0 text-base leading-[1.6] italic font-medium text-[var(--muted)] max-[760px]:mt-2.5 max-[760px]:text-[0.88rem] max-[760px]:leading-[1.45]">See how the community rates weather conditions across shared places.</p>
+                    <p className="mt-[15px] mb-0 max-w-3xl text-base leading-[1.6] font-medium text-[var(--muted)] max-[760px]:mt-2.5 max-[760px]:text-[0.88rem] max-[760px]:leading-[1.45]">Explore how the community rates our weather forecasts across shared locations.</p>
                 </div>
 
                 <div className="flex shrink-0 flex-col items-end gap-2 max-[560px]:mt-4 max-[560px]:items-stretch">

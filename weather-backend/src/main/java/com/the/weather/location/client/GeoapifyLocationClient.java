@@ -24,7 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class GeoapifyLocationClient implements LocationSearchService {
 
-    private static final int RESULT_LIMIT = 15;
+    private static final int RESULT_LIMIT = 20;
 
     private final RestClient restClient;
     private final String apiKey;

@@ -145,9 +145,9 @@ export function CommunityPostCard({ post, currentUserID, currentUsername, showLo
                             <MoreHorizontal className="size-5" aria-hidden="true" />
                         </button>
                         {menuOpen && (
-                            <div className="absolute top-9 right-0 z-10 min-w-32 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-1.5 shadow-md">
+                            <div className="absolute top-9 right-0 z-10 w-max min-w-32 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-1.5 shadow-md">
                                 <button
-                                    className="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2 text-left text-xs font-semibold text-red-500 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="flex w-full cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg border-0 bg-transparent px-3 py-2 text-left text-xs font-semibold text-red-500 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                                     type="button"
                                     disabled={busy}
                                     onClick={() => {
@@ -241,7 +241,7 @@ export function CommunityPostCard({ post, currentUserID, currentUsername, showLo
                         {isOwner ? (
                             <>
                                 <span className="inline-flex items-center gap-2 text-xs font-extrabold text-[var(--ink)]" aria-label={`${helpfulCount} helpful votes`}>
-                                    <ThumbsUp className="size-5 fill-current stroke-[1.8] text-[var(--feedback-helpful-icon)]" aria-hidden="true" />
+                                    <ThumbsUp className="size-5 fill-transparent stroke-[1.8] text-[var(--feedback-neutral-icon)]" aria-hidden="true" />
                                     {helpfulCount}
                                 </span>
                                 <span className="inline-flex items-center gap-2 border-l border-[var(--line)] pl-5 text-xs font-extrabold text-[var(--ink)] max-[430px]:pl-3" aria-label={`${notHelpfulCount} not helpful votes`}>
