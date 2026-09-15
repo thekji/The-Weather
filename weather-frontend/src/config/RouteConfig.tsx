@@ -4,6 +4,7 @@ import { getTokenExpirationTime, hasAuthSession, isTokenActive } from '../api/au
 import { LoadingScreen } from '../components/LoadingScreen'
 import { Sidebar, type AppPage } from '../components/Sidebar'
 import { AccountPage } from '../pages/AccountPage'
+import { AnalyticsPage } from '../pages/AnalyticsPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
 import { StarredPage } from '../pages/StarredPage'
@@ -73,7 +74,10 @@ function HomeRoute() {
 }
 
 function PageLayout({ page, children, fullScreen = false }: PageLayoutProps) {
-    const isFramedPage = page === 'account' || page === 'starred' || page === 'community'
+    const isFramedPage = page === 'account'
+        || page === 'starred'
+        || page === 'community'
+        || page === 'analytics'
     const pageContentClassName = [
         'flex h-dvh min-h-0 min-w-0 pr-[clamp(28px,6vw,86px)] pl-28 min-[1025px]:max-[1100px]:pr-10 max-[1025px]:px-6 max-[760px]:px-5 max-[430px]:px-[15px] max-[350px]:px-2.5',
         'flex h-dvh min-h-0 min-w-0 pr-[clamp(28px,6vw,86px)] pl-32 min-[1025px]:max-[1100px]:pr-10 max-[1025px]:px-6 max-[760px]:px-5 max-[430px]:px-[15px] max-[350px]:px-2.5',
@@ -132,6 +136,10 @@ function CommunityRoute() {
     return <PageLayout page="community"><CommunityPage /></PageLayout>
 }
 
+function AnalyticsRoute() {
+    return <PageLayout page="analytics"><AnalyticsPage /></PageLayout>
+}
+
 const RouteConfig = () => {
     return (
         <>
@@ -151,6 +159,7 @@ const RouteConfig = () => {
                 <Route path="/starred" element={<ProtectedRoute><StarredRoute /></ProtectedRoute>} />
                 <Route path="/starred/*" element={<ProtectedRoute><StarredRoute /></ProtectedRoute>} />
                 <Route path="/community" element={<ProtectedRoute><CommunityRoute /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute><AnalyticsRoute /></ProtectedRoute>} />
                 <Route path="/map" element={<ProtectedRoute><MapRoute /></ProtectedRoute>} />
                 <Route path="/map/*" element={<ProtectedRoute><MapRoute /></ProtectedRoute>} />
                 <Route path="/maps" element={<ProtectedRoute><MapRoute /></ProtectedRoute>} />

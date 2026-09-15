@@ -55,7 +55,65 @@ The daily handler returns seven forecast days with maximum and minimum 2 m
 temperature, sunrise, sunset, maximum precipitation probability, weather code,
 and condition.
 
-Example response:
+## Analytics handlers
+
+The shaded JAR also contains the S3, Glue, and Athena analytics pipeline:
+
+```text
+Export/status: com.the.weather.lambda.AnalyticsExportHandler
+Summary query: com.the.weather.lambda.AnalyticsQueryHandler
+```
+
+Map both refresh routes to the **same Lambda function** configured with
+`AnalyticsExportHandler`. Map the summary route to a second function configured
+with `AnalyticsQueryHandler`:
+
+```text
+POST /analytics/refresh         -> AnalyticsExportHandler
+GET  /analytics/refresh/status  -> AnalyticsExportHandler
+GET  /analytics/summary         -> AnalyticsQueryHandler
+```
+
+The export handler scans every DynamoDB page, writes only `postID`, `userID`,
+`locationID`, `locationName`, `createdAt`, `weatherAccuracyRating`,
+`helpfulCount`, and `notHelpfulCount` as NDJSON, overwrites the configured S3
+object, and then starts Glue. Missing feedback counters are written as zero. It
+does not start an overlapping export while the crawler is running or stopping.
+
+Export/status environment variables:
+
+```text
+COMMUNITY_POSTS_TABLE=CommunityPosts
+ANALYTICS_BUCKET=<private-analytics-bucket>
+ANALYTICS_KEY=community-analytics/posts/posts.json
+GLUE_CRAWLER_NAME=theweather-community-posts-crawler
+AWS_REGION=<deployment-region>
+```
+
+The query handler verifies that the Glue table exists, starts the total, average,
+rating-distribution, and top-location statements before polling, and polls for
+at most 50 attempts with a 400 ms interval. Athena calculates every dashboard
+metric. Its output always contains rating entries 1 through 5.
+
+Query environment variables:
+
+```text
+ATHENA_DATABASE=theweather_analytics
+ATHENA_TABLE=<actual-crawled-table>
+ATHENA_RATING_COLUMN=<actual-rating-column>       # default: weatheraccuracyrating
+ATHENA_LOCATION_COLUMN=<actual-location-column>   # default: locationname
+ATHENA_OUTPUT_LOCATION=s3://<private-analytics-bucket>/athena-results/
+ATHENA_WORKGROUP=primary                          # default: primary
+AWS_REGION=<deployment-region>
+```
+
+The output location must be a separate S3 prefix from
+`community-analytics/posts/`. Both handlers use the AWS SDK default credential
+provider chain and require role-based permissions; no credentials are read from
+application configuration. Direct responses are sanitized: a missing catalog
+table is `404`, AWS/query failures are `502`, and SDK/polling timeouts are `504`.
+
+Example weather response:
 
 ```json
 {

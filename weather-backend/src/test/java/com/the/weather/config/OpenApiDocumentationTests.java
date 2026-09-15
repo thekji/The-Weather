@@ -45,6 +45,11 @@ class OpenApiDocumentationTests {
                 .andExpect(jsonPath("$.paths['/api/stars/{locationID}/alerts']").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/posts/{postID}/feedback'].put").exists())
                 .andExpect(jsonPath("$.paths['/api/posts/{postID}/feedback'].delete").exists())
+                .andExpect(jsonPath("$.paths['/api/analytics/refresh'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/analytics/refresh/status'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/analytics/summary'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/analytics/summary'].get.security[0].bearerAuth")
+                        .isArray())
                 .andExpect(jsonPath("$.paths['/api/system/ping']").exists());
     }
 

@@ -33,4 +33,13 @@ GET /api/weather/daily?latitude=&longitude=
 GET /api/weather/history?latitude=&longitude=&date=&timezone=
 
 ANALYTICS
-GET /api/analytics/summary
+POST /api/analytics/refresh
+GET  /api/analytics/refresh/status
+GET  /api/analytics/summary
+
+All analytics endpoints require JWT authentication. `POST /api/analytics/refresh`
+returns HTTP 202 with `REFRESHING`, then the client polls the status endpoint until
+Glue reports `READY` or `FAILED`. `GET /api/analytics/summary` returns the four
+Athena-computed metrics: total posts, average weather accuracy, the normalized
+1-5 rating distribution, and the five most active locations. Spring is a
+same-origin facade and does not calculate these values locally.

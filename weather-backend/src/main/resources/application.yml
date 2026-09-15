@@ -24,6 +24,11 @@ weather:
     hourly-url: ${WEATHER_HOURLY_URL:}
     daily-url: ${WEATHER_DAILY_URL:}
 
+analytics:
+    refresh-url: ${ANALYTICS_REFRESH_URL:}
+    refresh-status-url: ${ANALYTICS_REFRESH_STATUS_URL:}
+    summary-url: ${ANALYTICS_SUMMARY_URL:}
+
 aws:
     region: ${AWS_REGION:us-east-1}
 
