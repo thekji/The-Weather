@@ -9,6 +9,5 @@ public record StarredLocation(
         String address,
         double latitude,
         double longitude,
-        Instant starredAt,
-        boolean weatherAlertsEnabled) {
+        Instant starredAt) {
 }

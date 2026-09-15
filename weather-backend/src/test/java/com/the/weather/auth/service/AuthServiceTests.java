@@ -33,7 +33,7 @@ class AuthServiceTests {
     private final InMemoryUserRepository repository = new InMemoryUserRepository();
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
-    private final JwtService jwtService = new JwtService(TEST_SECRET, 15, clock);
+    private final JwtService jwtService = new JwtService(TEST_SECRET, clock);
 
     private AuthService service;
 
@@ -90,6 +90,8 @@ class AuthServiceTests {
         assertThat(repository.lastLookupEmail).isEqualTo("user@example.com");
         assertThat(response.token()).isNotBlank();
         assertThat(jwtService.getUserID(response.token())).isEqualTo("user_123");
+        assertThat(jwtService.getAuthenticatedUser(response.token()).username())
+                .isEqualTo("Example User");
         assertThat(response.user()).isEqualTo(new UserResponse(
                 "user_123",
                 "user@example.com",

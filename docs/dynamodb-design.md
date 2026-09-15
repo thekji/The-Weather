@@ -16,7 +16,7 @@ Store `email` in one normalized form, such as trimmed lowercase. Registration us
 a conditional `PutItem` with `attribute_not_exists(email)`, which guarantees that
 concurrent requests cannot register the same normalized email twice.
 
-## StarredLocations - list, star, unstar, and toggle alerts
+## StarredLocations - list, star, and unstar
 PK: userID
 SK: locationID
 Attributes:
@@ -25,14 +25,14 @@ Attributes:
 - latitude
 - longitude
 - starredAt
-- weatherAlertsEnabled
 
 Use the same `latitude` and `longitude` names returned by normalized Geoapify search. Do not introduce `lat`/`lon` aliases.
 
-## CommunityPosts - create posts and query a location feed
+## CommunityPosts - create posts and query location/global feeds
 PK: postID
 Attributes:
 - userID
+- username
 - locationID
 - locationName
 - address
@@ -42,20 +42,27 @@ Attributes:
 - createdAt
 - imageKeys
 - apiWeather
+- weatherAccuracyRating
 - helpfulCount
 - notHelpfulCount
+- feedType
 
 GSI: LocationPostsIndex
 PK: locationID
 SK: createdAt
 
-Query `LocationPostsIndex` newest-first with `ScanIndexForward=false` and a bounded page size/cursor. Do not scan `CommunityPosts` for the normal feed. `UserPostsIndex` is not part of the frozen P0 design because no required endpoint queries a user's posts.
+GSI: CommunityFeedIndex
+PK: feedType (`COMMUNITY`)
+SK: createdAt
+
+Query both indexes newest-first with `ScanIndexForward=false` and cursor pagination. `LocationPostsIndex` serves one location and `CommunityFeedIndex` serves the global feed. Do not scan `CommunityPosts` for either feed.
 
 {
     "postID": "post_20260901_001",
     "createdAt": "2026-09-01T21:45:30Z",
 
     "userID": "user_abc123",
+    "username": "Example User",
 
     "locationID": "geoapify_51f1a7b3c9",
     "locationName": "RMIT University Melbourne City Campus",
@@ -71,66 +78,39 @@ Query `LocationPostsIndex` newest-first with `ScanIndexForward=false` and a boun
 
     "apiWeather": {
         "recordedAt": "2026-09-01T21:45:20Z",
-        "temperature_2m": 18.4,
-        "relative_humidity_2m": 72,
-        "apparent_temperature": 17.1,
-        "precipitation_probability": 35,
-        "precipitation": 0.2,
-        "rain": 0.2,
-        "is_day": 0,
-        "wind_speed_10m": 16.8,
-        "wind_direction_10m": 210,
-        "weather_code": 3
+        "weather_code": 3,
+        "condition": "Overcast"
     },
 
+    "weatherAccuracyRating": 3,
     "helpfulCount": 4,
-    "notHelpfulCount": 1
+    "notHelpfulCount": 1,
+    "feedType": "COMMUNITY"
 }
 
-`precipitation_probability` is a percentage. `precipitation` and `rain` are millimetres.
+Posts store zero to three private-S3 object keys. API responses contain short-lived presigned GET URLs instead of persistent keys.
 
-## PostFeedback - prevent duplicate feedback
+`weatherAccuracyRating` is the post author's required 1-5 assessment of how well
+the server-captured Open-Meteo condition matched what they observed. It remains
+independent from community usefulness feedback.
+
+## PostFeedback - one usefulness vote per user and post
 PK: postID
 SK: userID
 Attributes:
-- feedbackType
+- feedbackType (`HELPFUL` or `NOT_HELPFUL`)
 - createdAt
 
-Use a conditional write/transaction with the post counter update so a duplicate request cannot incorrectly increment counters. If vote changes are not implemented, return a controlled conflict.
+No GSI is required. Setting, switching, or removing feedback uses a DynamoDB
+transaction so the `PostFeedback` item and both counters remain consistent. A
+missing item represents `NONE`; an existing item contains `HELPFUL` or
+`NOT_HELPFUL`. The composite key enforces one current vote per user/post pair.
+Feed responses batch-read those exact composite keys to calculate nullable
+`myFeedback` for the authenticated viewer. Deleting a post queries this
+table by `postID` and deletes the returned items; it never scans the table. The
+current delete flow removes the `CommunityPosts` item first, then feedback rows,
+then S3 images. Removing the post first makes the transaction's post-existence
+condition reject any feedback racing with deletion.
 
-## AlertRules - retrieve predefined weather alert rules
-PK: alertRuleID
-Attributes:
-- alertType
-- metric
-- operator
-- threshold
-- enabled
-
-{
-    "alertRuleID": "rule_high_uv_001",
-    "alertType": "HIGH_UV",
-    "metric": "uv_index_max",
-    "operator": ">=",
-    "threshold": 7,
-    "enabled": true
-}
-
-
-## AlertState
-PK: userID
-SK: locationID
-Attributes:
-- lastTriggeredAlerts
-
-{
-    "userID": "user_abc123",
-    "locationID": "geoapify_51f1a7b3c9",
-    "lastTriggeredAlerts": {
-        "HIGH_UV": "2026-09-01T03:00:00Z",
-        "RAIN_ALERT": "2026-09-01T08:30:00Z",
-        "HIGH_TEMPERATURE": "2026-08-31T06:15:00Z"
-    }
-}
-
-Store one independent cooldown timestamp per alert type. There is no separate `Locations`, `WeatherSnapshot`, alert-history, or daily-summary table.
+There is no separate `Locations`, `WeatherSnapshot`, notification-history, or
+daily-summary table.

@@ -1,6 +1,10 @@
 spring:
     application:
         name: weather
+    servlet:
+        multipart:
+            max-file-size: 5MB
+            max-request-size: 16MB
 
 springdoc:
     api-docs:
@@ -26,7 +30,13 @@ aws:
 dynamodb:
     users-table: ${USERS_TABLE:Users}
     starred-locations-table: ${STARRED_LOCATIONS_TABLE:StarredLocations}
+    community-posts-table: ${COMMUNITY_POSTS_TABLE:CommunityPosts}
+    post-feedback-table: ${POST_FEEDBACK_TABLE:PostFeedback}
+
+storage:
+    post-images-bucket: ${POST_IMAGES_BUCKET:}
+    post-image-max-bytes: 5242880
+    presigned-get-minutes: 15
 
 jwt:
     secret: ${JWT_SECRET:}
-    expiration-minutes: ${JWT_EXPIRATION_MINUTES:15}

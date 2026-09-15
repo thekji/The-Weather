@@ -1,7 +1,9 @@
 package com.the.weather.security;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -83,10 +85,21 @@ class SecurityIntegrationTests {
     }
 
     @Test
+    void feedbackRouteRejectsAMissingJwt() throws Exception {
+        mockMvc.perform(put("/api/posts/post_1/feedback")
+                        .contentType("application/json")
+                        .content("{\"feedbackType\":\"HELPFUL\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+        mockMvc.perform(delete("/api/posts/post_1/feedback"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
     void jwtWithInvalidSignatureIsRejected() throws Exception {
         JwtService otherSigner = new JwtService(
                 "different-test-secret-with-more-than-32-bytes",
-                15,
                 Clock.systemUTC());
         String token = otherSigner.generateToken("user_123");
 
@@ -101,7 +114,7 @@ class SecurityIntegrationTests {
         Clock oldClock = Clock.fixed(
                 Instant.now().minus(Duration.ofHours(1)),
                 ZoneOffset.UTC);
-        JwtService oldSigner = new JwtService(TEST_SECRET, 1, oldClock);
+        JwtService oldSigner = new JwtService(TEST_SECRET, oldClock);
         String token = oldSigner.generateToken("user_123");
 
         mockMvc.perform(get("/api/protected-test")

@@ -21,50 +21,57 @@ import io.jsonwebtoken.security.Keys;
 public class JwtService {
 
     private static final int MINIMUM_SECRET_BYTES = 32;
+    private static final Duration SESSION_LIFETIME = Duration.ofMinutes(30);
 
     private final SecretKey signingKey;
-    private final Duration expiration;
     private final Clock clock;
 
     public JwtService(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration-minutes}") long expirationMinutes,
             Clock clock) {
         byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (secretBytes.length < MINIMUM_SECRET_BYTES) {
             throw new IllegalStateException("JWT_SECRET must contain at least 32 bytes");
         }
-        if (expirationMinutes <= 0) {
-            throw new IllegalStateException("JWT_EXPIRATION_MINUTES must be greater than zero");
-        }
 
         this.signingKey = Keys.hmacShaKeyFor(secretBytes);
-        this.expiration = Duration.ofMinutes(expirationMinutes);
         this.clock = clock;
     }
 
-    public String generateToken(String userID) {
+    public String generateToken(String userID, String username) {
         Instant issuedAt = clock.instant();
         return Jwts.builder()
                 .subject(userID)
+                .claim("username", username)
                 .issuedAt(Date.from(issuedAt))
-                .expiration(Date.from(issuedAt.plus(expiration)))
+                .expiration(Date.from(issuedAt.plus(SESSION_LIFETIME)))
                 .signWith(signingKey)
                 .compact();
     }
 
-    public String getUserID(String token) throws JwtException {
-        String userID = Jwts.parser()
+    public String generateToken(String userID) {
+        return generateToken(userID, userID);
+    }
+
+    public AuthenticatedUser getAuthenticatedUser(String token) throws JwtException {
+        var claims = Jwts.parser()
                 .verifyWith(signingKey)
                 .clock(() -> Date.from(clock.instant()))
                 .build()
                 .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+                .getPayload();
+        String userID = claims.getSubject();
 
         if (!StringUtils.hasText(userID)) {
             throw new MalformedJwtException("JWT subject is missing");
         }
-        return userID;
+
+        String username = claims.get("username", String.class);
+        return new AuthenticatedUser(userID,
+                StringUtils.hasText(username) ? username : userID);
+    }
+
+    public String getUserID(String token) throws JwtException {
+        return getAuthenticatedUser(token).userID();
     }
 }

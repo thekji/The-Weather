@@ -1,4 +1,4 @@
-import { getErrorMessage } from '../../../api/errorResponse'
+import { httpHelper } from '../../../utils/httpHelper'
 import type { LoginRequest, LoginResponse } from '../types'
 
 function isLoginResponse(value: unknown): value is LoginResponse {
@@ -15,26 +15,12 @@ function isLoginResponse(value: unknown): value is LoginResponse {
 }
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
-    const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
+    return httpHelper.post<LoginResponse>('/api/auth/login', request, {
+        fallbackError: 'Login could not be completed.',
+        invalidResponseMessage: 'The login service returned an invalid response.',
+        statusMessages: {
+            401: 'Email or password is invalid.',
         },
-        body: JSON.stringify(request),
+        validate: isLoginResponse,
     })
-
-    if (!response.ok) {
-        if (response.status === 401) {
-            throw new Error('Email or password is invalid.')
-        }
-        throw new Error(await getErrorMessage(response, 'Login could not be completed.'))
-    }
-
-    const result: unknown = await response.json()
-    if (!isLoginResponse(result)) {
-        throw new Error('The login service returned an invalid response.')
-    }
-
-    return result
 }

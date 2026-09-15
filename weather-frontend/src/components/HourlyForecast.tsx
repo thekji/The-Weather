@@ -81,10 +81,10 @@ export function HourlyForecast({
 
     return (
         <section
-            className="glass-inset mt-3.5 overflow-hidden rounded-[18px] border border-[#dce8f1] bg-[linear-gradient(145deg,rgba(255,255,255,0.78),rgba(240,247,252,0.72))]"
+            className="mt-3.5 overflow-hidden rounded-[18px] border border-[var(--line)] bg-[var(--soft-surface)]"
             aria-labelledby="hourly-forecast-title"
         >
-            <div className="flex items-center justify-between gap-3 border-b border-white/30 px-4 py-3">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3">
                 <h3
                     className="m-0 text-[0.7rem] font-extrabold tracking-[0.08em] text-[var(--muted-strong)] uppercase"
                     id="hourly-forecast-title"
@@ -139,7 +139,7 @@ export function HourlyForecast({
             {!isLoading && !error && hours.length > 0 && (
                 <div className="overflow-x-auto overscroll-x-contain pb-1">
                     <div
-                        className="grid min-w-max auto-cols-[144px] grid-flow-col px-2"
+                        className="grid min-w-max auto-cols-[168px] grid-flow-col px-2"
                         role="list"
                         aria-label="Remaining hourly weather for today"
                     >
@@ -148,13 +148,13 @@ export function HourlyForecast({
 
                             return (
                                 <div
-                                    className="grid min-h-[168px] grid-rows-[auto_58px_auto_auto] place-items-center gap-1 border-white/30 px-2 py-3.5 text-center [&+div]:border-l"
+                                    className="grid min-h-[168px] grid-rows-[auto_58px_auto_auto] place-items-center gap-1 border-[var(--line)] px-2.5 py-3.5 text-center [&+div]:border-l"
                                     key={hour.time}
                                     role="listitem"
                                     aria-label={`${timeLabel(hour.time)}, ${hour.condition}, ${Math.round(hour.temperatureCelsius)} degrees Celsius, ${rainChance} percent chance of rain, UV index ${hour.uvIndex}, clear sky UV index ${hour.uvIndexClearSky}`}
                                 >
                                     <time
-                                        className="text-[0.68rem] font-bold text-[var(--muted-strong)]"
+                                        className="text-[0.68rem] font-semibold italic tracking-tight text-[var(--muted-strong)]"
                                         dateTime={hour.time}
                                     >
                                         {timeLabel(hour.time)}
@@ -173,9 +173,9 @@ export function HourlyForecast({
                                             <Umbrella className="h-3 w-3 text-[var(--accent)]" aria-hidden="true" />
                                             {rainChance}%
                                         </span>
-                                        <span className="inline-flex items-center justify-center gap-1 text-[var(--muted-strong)]">
+                                        <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap text-[var(--muted-strong)]">
                                             <Sun className="h-3 w-3 text-[var(--footer-icon)]" aria-hidden="true" />
-                                            UV {hour.uvIndex} (clouds)
+                                            UV {hour.uvIndex} · with clouds
                                         </span>
                                         <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap text-[#d94b5c]">
                                             <Sun className="h-3 w-3" aria-hidden="true" />

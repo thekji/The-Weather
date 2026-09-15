@@ -16,7 +16,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("TheWeather API")
-                        .description("REST API for weather, starred locations, community posts, alerts, and analytics.")
+                        .description("REST API for weather, starred locations, community posts, and analytics.")
                         .version("v1")
                         .contact(new Contact().name("TheWeather Team")))
                 .components(new Components().addSecuritySchemes(

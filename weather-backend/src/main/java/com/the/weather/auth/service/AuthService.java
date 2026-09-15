@@ -61,7 +61,7 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
-        return new LoginResponse(jwtService.generateToken(user.userID()), UserResponse.from(user));
+        return new LoginResponse(jwtService.generateToken(user.userID(), user.name()), UserResponse.from(user));
     }
 
     static String normalizeEmail(String email) {

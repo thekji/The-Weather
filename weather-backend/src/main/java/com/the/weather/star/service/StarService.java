@@ -1,8 +1,10 @@
 package com.the.weather.star.service;
 
+import java.text.Normalizer;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -25,8 +27,19 @@ public class StarService {
     }
 
     public List<StarredLocationResponse> list(String authenticatedUserID) {
+        return list(authenticatedUserID, null);
+    }
+
+    public List<StarredLocationResponse> list(
+            String authenticatedUserID,
+            String query) {
         validateIdentity(authenticatedUserID);
+        String normalizedQuery = normalizeSearchText(query);
+
         return starRepository.findAllByUserID(authenticatedUserID).stream()
+                .filter(star -> normalizedQuery.isEmpty()
+                        || normalizeSearchText(star.name()).contains(normalizedQuery)
+                        || normalizeSearchText(star.address()).contains(normalizedQuery))
                 .map(StarredLocationResponse::from)
                 .toList();
     }
@@ -44,8 +57,7 @@ public class StarService {
                 request.address(),
                 request.latitude(),
                 request.longitude(),
-                Instant.now(clock),
-                false);
+                Instant.now(clock));
 
         if (starRepository.saveIfAbsent(candidate)) {
             return new CreateStarResult(StarredLocationResponse.from(candidate), true);
@@ -87,6 +99,17 @@ public class StarService {
                 && Double.isFinite(value)
                 && value >= minimum
                 && value <= maximum;
+    }
+
+    private static String normalizeSearchText(String value) {
+        if (!StringUtils.hasText(value)) {
+            return "";
+        }
+
+        return Normalizer.normalize(value.trim(), Normalizer.Form.NFD)
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("\\p{M}+", "")
+                .replace('đ', 'd');
     }
 
     public record CreateStarResult(StarredLocationResponse star, boolean created) {

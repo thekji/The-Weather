@@ -36,8 +36,7 @@ class StarControllerTests {
             "702 Nguyen Van Linh, Ho Chi Minh City",
             10.729,
             106.694,
-            CLOCK.instant(),
-            false);
+            CLOCK.instant());
 
     private final StubStarService service = new StubStarService();
     private MockMvc mockMvc;
@@ -47,6 +46,7 @@ class StarControllerTests {
         service.listResult = List.of();
         service.createResult = new CreateStarResult(RESPONSE, true);
         service.listUserID = null;
+        service.listQuery = null;
         service.createUserID = null;
         service.createRequest = null;
         service.deleteUserID = null;
@@ -71,10 +71,25 @@ class StarControllerTests {
                 .andExpect(jsonPath("$[0].latitude").value(10.729))
                 .andExpect(jsonPath("$[0].longitude").value(106.694))
                 .andExpect(jsonPath("$[0].starredAt").value("2026-09-08T01:00:00Z"))
-                .andExpect(jsonPath("$[0].weatherAlertsEnabled").value(false))
+                .andExpect(jsonPath("$[0].weatherAlertsEnabled").doesNotExist())
                 .andExpect(jsonPath("$[0].userID").doesNotExist());
 
         assertThat(service.listUserID).isEqualTo("user_123");
+        assertThat(service.listQuery).isNull();
+    }
+
+    @Test
+    void searchPassesTheQueryAndAuthenticatedIdentityToTheService() throws Exception {
+        service.listResult = List.of(RESPONSE);
+
+        mockMvc.perform(get("/api/stars")
+                        .queryParam("query", "nguyen van linh")
+                        .principal(() -> "user_123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].locationID").value("geoapify:abc123"));
+
+        assertThat(service.listUserID).isEqualTo("user_123");
+        assertThat(service.listQuery).isEqualTo("nguyen van linh");
     }
 
     @Test
@@ -92,7 +107,7 @@ class StarControllerTests {
                         .content(validRequest()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.locationID").value("geoapify:abc123"))
-                .andExpect(jsonPath("$.weatherAlertsEnabled").value(false))
+                .andExpect(jsonPath("$.weatherAlertsEnabled").doesNotExist())
                 .andExpect(jsonPath("$.userID").doesNotExist());
 
         assertThat(service.createUserID).isEqualTo("user_123");
@@ -146,7 +161,7 @@ class StarControllerTests {
     }
 
     @Test
-    void rejectsClientControlledAndUnknownFields() throws Exception {
+    void rejectsClientControlledAndUnknownFieldsIncludingRetiredAlertField() throws Exception {
         mockMvc.perform(post("/api/stars")
                         .principal(() -> "user_123")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -195,6 +210,7 @@ class StarControllerTests {
         private List<StarredLocationResponse> listResult = List.of();
         private CreateStarResult createResult;
         private String listUserID;
+        private String listQuery;
         private String createUserID;
         private CreateStarRequest createRequest;
         private String deleteUserID;
@@ -205,8 +221,11 @@ class StarControllerTests {
         }
 
         @Override
-        public List<StarredLocationResponse> list(String authenticatedUserID) {
+        public List<StarredLocationResponse> list(
+                String authenticatedUserID,
+                String query) {
             listUserID = authenticatedUserID;
+            listQuery = query;
             return listResult;
         }
 

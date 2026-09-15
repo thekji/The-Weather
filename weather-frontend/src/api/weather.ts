@@ -1,4 +1,4 @@
-import { getAuthorizationHeaders } from './auth'
+import { httpHelper } from '../utils/httpHelper'
 
 export type CurrentWeather = {
     latitude: number
@@ -147,24 +147,13 @@ export async function getCurrentWeather(
         latitude: String(coordinates.latitude),
         longitude: String(coordinates.longitude),
     })
-    const response = await fetch(`/api/weather?${searchParams}`, {
-        headers: {
-            Accept: 'application/json',
-            ...getAuthorizationHeaders(),
-        },
+    return httpHelper.get<CurrentWeather>(`/api/weather?${searchParams}`, {
+        authenticated: true,
         signal,
+        fallbackError: 'Current weather could not be loaded.',
+        invalidResponseMessage: 'The weather service returned an invalid response.',
+        validate: isCurrentWeather,
     })
-
-    if (!response.ok) {
-        throw new Error('Current weather could not be loaded.')
-    }
-
-    const weather: unknown = await response.json()
-    if (!isCurrentWeather(weather)) {
-        throw new Error('The weather service returned an invalid response.')
-    }
-
-    return weather
 }
 
 export async function getHourlyWeather(
@@ -175,24 +164,13 @@ export async function getHourlyWeather(
         latitude: String(coordinates.latitude),
         longitude: String(coordinates.longitude),
     })
-    const response = await fetch(`/api/weather/hourly?${searchParams}`, {
-        headers: {
-            Accept: 'application/json',
-            ...getAuthorizationHeaders(),
-        },
+    return httpHelper.get<HourlyWeatherForecast>(`/api/weather/hourly?${searchParams}`, {
+        authenticated: true,
         signal,
+        fallbackError: 'Hourly forecast could not be loaded.',
+        invalidResponseMessage: 'The weather service returned an invalid hourly forecast.',
+        validate: isHourlyWeatherForecast,
     })
-
-    if (!response.ok) {
-        throw new Error('Hourly forecast could not be loaded.')
-    }
-
-    const forecast: unknown = await response.json()
-    if (!isHourlyWeatherForecast(forecast)) {
-        throw new Error('The weather service returned an invalid hourly forecast.')
-    }
-
-    return forecast
 }
 
 export async function getDailyWeather(
@@ -203,22 +181,11 @@ export async function getDailyWeather(
         latitude: String(coordinates.latitude),
         longitude: String(coordinates.longitude),
     })
-    const response = await fetch(`/api/weather/daily?${searchParams}`, {
-        headers: {
-            Accept: 'application/json',
-            ...getAuthorizationHeaders(),
-        },
+    return httpHelper.get<DailyWeatherForecast>(`/api/weather/daily?${searchParams}`, {
+        authenticated: true,
         signal,
+        fallbackError: 'Daily forecast could not be loaded.',
+        invalidResponseMessage: 'The weather service returned an invalid daily forecast.',
+        validate: isDailyWeatherForecast,
     })
-
-    if (!response.ok) {
-        throw new Error('Daily forecast could not be loaded.')
-    }
-
-    const forecast: unknown = await response.json()
-    if (!isDailyWeatherForecast(forecast)) {
-        throw new Error('The weather service returned an invalid daily forecast.')
-    }
-
-    return forecast
 }

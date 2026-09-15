@@ -42,9 +42,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authorization.substring(BEARER_PREFIX.length()).trim();
-        String userID;
+        AuthenticatedUser user;
         try {
-            userID = jwtService.getUserID(token);
+            user = jwtService.getAuthenticatedUser(token);
         } catch (JwtException | IllegalArgumentException exception) {
             SecurityContextHolder.clearContext();
             authenticationEntryPoint.commence(
@@ -55,7 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(userID, null, List.of());
+                new UsernamePasswordAuthenticationToken(user, null, List.of());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
     }

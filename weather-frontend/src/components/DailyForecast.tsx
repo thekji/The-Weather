@@ -30,7 +30,7 @@ function formatTime(timestamp: string) {
 
 export function DailyForecast({ forecast, isLoading, error, onRetry }: DailyForecastProps) {
     return (
-        <section className="glass-inset min-w-0 rounded-[19px] border border-white/55 p-3.5" aria-labelledby="daily-forecast-title">
+        <section className="min-w-0 rounded-[19px] border border-[var(--line)] bg-[var(--soft-surface)] p-3.5" aria-labelledby="daily-forecast-title">
             <h3 className="m-0 text-[0.86rem] font-extrabold tracking-[0.06em] text-[var(--muted-strong)] uppercase" id="daily-forecast-title">
                 7-day forecast
             </h3>
@@ -45,39 +45,36 @@ export function DailyForecast({ forecast, isLoading, error, onRetry }: DailyFore
             {error && !isLoading && (
                 <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 text-center text-sm text-[#a33c50]" role="alert">
                     <span>{error}</span>
-                    <button className="glass-inset cursor-pointer rounded-xl border border-white/55 px-3 py-2 font-bold transition-transform active:scale-95" type="button" onClick={onRetry}>
+                    <button className="cursor-pointer rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 font-bold transition-transform active:scale-95 text-[var(--ink)]" type="button" onClick={onRetry}>
                         Try again
                     </button>
                 </div>
             )}
 
             {forecast && !isLoading && (
-                <ul className="mt-3 grid list-none gap-2 p-0">
-                    {forecast.days.slice(0, 7).map((day) => {
-                        const displayDate = formatDate(day.date)
-                        return (
-                            <li className="grid min-h-[54px] grid-cols-[50px_54px_68px_90px_58px] items-center justify-between gap-0 rounded-xl border border-white/45 bg-white/15 px-2 py-1.5 max-[430px]:grid-cols-[42px_42px_minmax(0,1fr)_54px] max-[430px]:gap-1.5 max-[430px]:px-1.5" key={day.date}>
-                                <div className="leading-tight">
-                                    <strong className="block text-[0.78rem]">{displayDate.weekday}</strong>
-                                    <span className="text-[0.7rem] text-[var(--muted)]">{displayDate.calendarDate}</span>
-                                </div>
-                                <img className="size-11 justify-self-center object-contain drop-shadow-[0_7px_8px_rgba(45,101,148,0.16)] max-[430px]:size-10" src={getWeatherArtwork({ weatherCode: day.weatherCode, daytime: true })} alt={day.condition} />
-                                <div className="justify-self-center whitespace-nowrap text-[0.78rem] font-extrabold tabular-nums">
-                                    {Math.round(day.maximumTemperatureCelsius)}°
-                                    <span className="font-semibold text-[var(--muted)]"> / {Math.round(day.minimumTemperatureCelsius)}°</span>
-                                </div>
-                                <div className="grid gap-1 text-[0.68rem] text-[var(--muted-strong)] max-[430px]:order-5 max-[430px]:col-span-full max-[430px]:grid-cols-2 max-[430px]:justify-items-center max-[430px]:border-t max-[430px]:border-white/30 max-[430px]:pt-1.5">
-                                    <span className="flex items-center gap-1 whitespace-nowrap"><Sunrise className="size-4 shrink-0 text-[#e0a20b]" aria-hidden="true" />{formatTime(day.sunrise)}</span>
-                                    <span className="flex items-center gap-1 whitespace-nowrap"><Sunset className="size-4 shrink-0 text-[#f17359]" aria-hidden="true" />{formatTime(day.sunset)}</span>
-                                </div>
-                                <span className="flex items-center justify-self-start gap-1 whitespace-nowrap text-[0.72rem] font-bold text-[var(--muted-strong)] tabular-nums max-[430px]:order-4">
-                                    <Umbrella className="size-[18px] shrink-0 text-[var(--accent)]" aria-hidden="true" />
-                                    {Math.round(day.precipitationProbabilityMaxPercent)}%
-                                </span>
-                            </li>
-                        )
-                    })}
-                </ul>
+                <div className="mt-3 overflow-x-auto overscroll-x-contain pb-1">
+                    <ul className="m-0 grid min-w-max auto-cols-[132px] grid-flow-col list-none gap-2 p-0" aria-label="Seven-day weather forecast">
+                        {forecast.days.slice(0, 7).map((day) => {
+                            const displayDate = formatDate(day.date)
+                            return (
+                                <li className="flex min-h-[218px] min-w-0 flex-col items-center rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-center" key={day.date}>
+                                    <strong className="text-[0.84rem] font-extrabold tracking-wide text-[var(--ink)]">{displayDate.weekday}</strong>
+                                    <span className="mt-0.5 text-[0.66rem] font-medium italic text-[var(--muted)]">{displayDate.calendarDate}</span>
+                                    <img className="my-2 size-12 object-contain drop-shadow-[0_7px_8px_rgba(45,101,148,0.16)]" src={getWeatherArtwork({ weatherCode: day.weatherCode, daytime: true })} alt={day.condition} />
+                                    <div className="whitespace-nowrap text-[0.94rem] font-extrabold text-[var(--ink)] tabular-nums">
+                                        {Math.round(day.maximumTemperatureCelsius)}°
+                                        <span className="font-semibold text-[var(--muted)]"> / {Math.round(day.minimumTemperatureCelsius)}°</span>
+                                    </div>
+                                    <div className="mt-2 grid w-full gap-1.5 border-t border-white/30 pt-2 text-[0.66rem] font-semibold text-[var(--muted-strong)]">
+                                        <span className="flex items-center gap-1 whitespace-nowrap"><Sunrise className="size-3.5 shrink-0 text-[#e0a20b]" aria-hidden="true" />{formatTime(day.sunrise)}</span>
+                                        <span className="flex items-center gap-1 whitespace-nowrap"><Sunset className="size-3.5 shrink-0 text-[#f17359]" aria-hidden="true" />{formatTime(day.sunset)}</span>
+                                        <span className="flex items-center gap-1 whitespace-nowrap"><Umbrella className="size-3.5 shrink-0 text-[var(--accent)]" aria-hidden="true" />{Math.round(day.precipitationProbabilityMaxPercent)}%</span>
+                                    </div>
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </div>
             )}
         </section>
     )

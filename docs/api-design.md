@@ -10,20 +10,21 @@ STARS
 GET    /api/stars
 POST   /api/stars
 DELETE /api/stars/{locationID}
-PATCH  /api/stars/{locationID}/alerts
 
 POSTS
 GET    /api/locations/{locationID}/posts?limit=&cursor=
-POST   /api/locations/{locationID}/posts
+POST   /api/locations/{locationID}/posts (multipart/form-data with required weatherAccuracyRating 1-5)
+GET    /api/posts?limit=&cursor=
 GET    /api/posts/{postID}
-PATCH  /api/posts/{postID}
 DELETE /api/posts/{postID}
-POST   /api/posts/{postID}/feedback
+PUT    /api/posts/{postID}/feedback ({ "feedbackType": "HELPFUL" | "NOT_HELPFUL" })
+DELETE /api/posts/{postID}/feedback
 
-IMAGE
-GET    /api/posts/{postID}/image
-PUT    /api/posts/{postID}/image
-DELETE /api/posts/{postID}/image
+Post responses include `helpfulCount`, `notHelpfulCount`, and the authenticated
+viewer's nullable `myFeedback`. Feedback requires JWT authentication, derives
+`userID` from the token, rejects self-feedback, and stores at most one mutable
+feedback item per user/post pair. `PUT` sets or switches the choice; `DELETE`
+removes it.
 
 WEATHER
 GET /api/weather?latitude=&longitude=&timezone=

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.the.weather.star.dto.CreateStarRequest;
@@ -37,11 +38,13 @@ public class StarController {
     }
 
     @GetMapping
-    @Operation(summary = "List the authenticated user's starred locations")
+    @Operation(summary = "List or search the authenticated user's starred locations")
     @ApiResponse(responseCode = "200", description = "Starred locations returned")
     @ApiResponse(responseCode = "401", description = "Authentication is required")
-    public List<StarredLocationResponse> list(Principal principal) {
-        return starService.list(principal.getName());
+    public List<StarredLocationResponse> list(
+            Principal principal,
+            @RequestParam(required = false) String query) {
+        return starService.list(principal.getName(), query);
     }
 
     @PostMapping

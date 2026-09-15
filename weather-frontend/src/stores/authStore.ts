@@ -14,11 +14,14 @@ export type AuthSession = {
     user: AuthUser
 }
 
+export type SessionEndReason = 'expired'
+
 type AuthStore = {
     token: string | null
     user: AuthUser | null
+    sessionEndReason: SessionEndReason | null
     setSession: (session: AuthSession) => void
-    clearSession: () => void
+    clearSession: (reason?: SessionEndReason) => void
 }
 
 function readStoredUser(): AuthUser | null {
@@ -49,16 +52,17 @@ function readStoredUser(): AuthUser | null {
 export const useAuthStore = create<AuthStore>((set) => ({
     token: sessionStorage.getItem(TOKEN_STORAGE_KEY),
     user: readStoredUser(),
+    sessionEndReason: null,
 
     setSession: ({ token, user }) => {
         sessionStorage.setItem(TOKEN_STORAGE_KEY, token)
         sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
-        set({ token, user })
+        set({ token, user, sessionEndReason: null })
     },
 
-    clearSession: () => {
+    clearSession: (reason) => {
         sessionStorage.removeItem(TOKEN_STORAGE_KEY)
         sessionStorage.removeItem(USER_STORAGE_KEY)
-        set({ token: null, user: null })
+        set({ token: null, user: null, sessionEndReason: reason ?? null })
     },
 }))

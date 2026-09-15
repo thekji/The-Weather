@@ -90,10 +90,8 @@ class DynamoDbStarRepositoryTests {
         assertThat(request.item()).containsEntry(
                 "starredAt",
                 AttributeValue.fromS("2026-09-08T01:00:00Z"));
-        assertThat(request.item()).containsEntry(
-                "weatherAlertsEnabled",
-                AttributeValue.fromBool(false));
-        assertThat(request.item()).hasSize(8);
+        assertThat(request.item()).doesNotContainKey("weatherAlertsEnabled");
+        assertThat(request.item()).hasSize(7);
         assertThat(request.conditionExpression()).isEqualTo(
                 "attribute_not_exists(#userID) AND attribute_not_exists(#locationID)");
         assertThat(request.expressionAttributeNames())
@@ -147,8 +145,7 @@ class DynamoDbStarRepositoryTests {
                 "702 Nguyen Van Linh, Ho Chi Minh City",
                 10.729,
                 106.694,
-                STARRED_AT,
-                false);
+                STARRED_AT);
     }
 
     private static Map<String, AttributeValue> item(String userID, String locationID) {
@@ -160,8 +157,7 @@ class DynamoDbStarRepositoryTests {
                 "address", AttributeValue.fromS(star.address()),
                 "latitude", AttributeValue.fromN(Double.toString(star.latitude())),
                 "longitude", AttributeValue.fromN(Double.toString(star.longitude())),
-                "starredAt", AttributeValue.fromS(star.starredAt().toString()),
-                "weatherAlertsEnabled", AttributeValue.fromBool(star.weatherAlertsEnabled()));
+                "starredAt", AttributeValue.fromS(star.starredAt().toString()));
     }
 
     private static Map<String, AttributeValue> key(String userID, String locationID) {

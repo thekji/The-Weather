@@ -1,4 +1,4 @@
-import { getAuthorizationHeaders } from './auth'
+import { httpHelper } from '../utils/httpHelper'
 
 export type LocationSearchResult = {
     locationID: string
@@ -37,22 +37,11 @@ export async function reverseGeocode(
         latitude: String(latitude),
         longitude: String(longitude),
     })
-    const response = await fetch(`/api/locations/reverse?${searchParams}`, {
-        headers: {
-            Accept: 'application/json',
-            ...getAuthorizationHeaders(),
-        },
+    return httpHelper.get<LocationSearchResult>(`/api/locations/reverse?${searchParams}`, {
+        authenticated: true,
         signal,
+        fallbackError: 'Could not identify this map location.',
+        invalidResponseMessage: 'The location service returned an invalid response.',
+        validate: isLocationSearchResult,
     })
-
-    if (!response.ok) {
-        throw new Error('Could not identify this map location.')
-    }
-
-    const location: unknown = await response.json()
-    if (!isLocationSearchResult(location)) {
-        throw new Error('The location service returned an invalid response.')
-    }
-
-    return location
 }

@@ -68,7 +68,7 @@ export function RegisterForm() {
                         aria-invalid={Boolean(errors.email)}
                         aria-describedby={errors.email ? 'register-email-error' : undefined}
                         disabled={isLoading}
-                        className="glass-inset min-h-[49px] w-full rounded-[13px] border border-white/60 px-3.5 text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(21,150,245,0.16)] aria-invalid:border-[#d66a73] disabled:opacity-60 motion-reduce:transition-none"
+                        className="min-h-[49px] w-full rounded-[13px] border border-[var(--line)] bg-[var(--soft-surface)] px-3.5 text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(21,150,245,0.16)] aria-invalid:border-[#d66a73] disabled:opacity-60 motion-reduce:transition-none"
                     />
                     {errors.email && (
                         <p id="register-email-error" className="m-0 text-[0.76rem] font-semibold text-[#a93844]">
@@ -89,7 +89,7 @@ export function RegisterForm() {
                         aria-invalid={Boolean(errors.name)}
                         aria-describedby={errors.name ? 'register-name-error' : undefined}
                         disabled={isLoading}
-                        className="glass-inset min-h-[49px] w-full rounded-[13px] border border-white/60 px-3.5 text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(21,150,245,0.16)] aria-invalid:border-[#d66a73] disabled:opacity-60 motion-reduce:transition-none"
+                        className="min-h-[49px] w-full rounded-[13px] border border-[var(--line)] bg-[var(--soft-surface)] px-3.5 text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(21,150,245,0.16)] aria-invalid:border-[#d66a73] disabled:opacity-60 motion-reduce:transition-none"
                     />
                     {errors.name && (
                         <p id="register-name-error" className="m-0 text-[0.76rem] font-semibold text-[#a93844]">
@@ -112,7 +112,7 @@ export function RegisterForm() {
                             errors.password ? 'register-password-error' : undefined
                         }
                         disabled={isLoading}
-                        className="glass-inset min-h-[49px] w-full rounded-[13px] border border-white/60 px-3.5 text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(21,150,245,0.16)] aria-invalid:border-[#d66a73] disabled:opacity-60 motion-reduce:transition-none"
+                        className="min-h-[49px] w-full rounded-[13px] border border-[var(--line)] bg-[var(--soft-surface)] px-3.5 text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(21,150,245,0.16)] aria-invalid:border-[#d66a73] disabled:opacity-60 motion-reduce:transition-none"
                     />
                     {errors.password && (
                         <p id="register-password-error" className="m-0 text-[0.76rem] font-semibold text-[#a93844]">

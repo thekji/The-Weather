@@ -42,6 +42,9 @@ class OpenApiDocumentationTests {
                 .andExpect(jsonPath("$.paths['/api/stars'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/stars'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/stars/{locationID}'].delete").exists())
+                .andExpect(jsonPath("$.paths['/api/stars/{locationID}/alerts']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/posts/{postID}/feedback'].put").exists())
+                .andExpect(jsonPath("$.paths['/api/posts/{postID}/feedback'].delete").exists())
                 .andExpect(jsonPath("$.paths['/api/system/ping']").exists());
     }
 

@@ -85,8 +85,7 @@ public class DynamoDbStarRepository implements StarRepository {
                 "address", AttributeValue.fromS(location.address()),
                 "latitude", AttributeValue.fromN(Double.toString(location.latitude())),
                 "longitude", AttributeValue.fromN(Double.toString(location.longitude())),
-                "starredAt", AttributeValue.fromS(location.starredAt().toString()),
-                "weatherAlertsEnabled", AttributeValue.fromBool(location.weatherAlertsEnabled()));
+                "starredAt", AttributeValue.fromS(location.starredAt().toString()));
 
         try {
             dynamoDb.putItem(PutItemRequest.builder()
@@ -126,7 +125,6 @@ public class DynamoDbStarRepository implements StarRepository {
                 item.get("address").s(),
                 Double.parseDouble(item.get("latitude").n()),
                 Double.parseDouble(item.get("longitude").n()),
-                Instant.parse(item.get("starredAt").s()),
-                item.get("weatherAlertsEnabled").bool());
+                Instant.parse(item.get("starredAt").s()));
     }
 }

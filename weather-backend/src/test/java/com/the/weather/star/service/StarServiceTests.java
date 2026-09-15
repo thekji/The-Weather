@@ -39,8 +39,7 @@ class StarServiceTests {
                 "702 Nguyen Van Linh, Ho Chi Minh City",
                 10.729,
                 106.694,
-                NOW,
-                false));
+                NOW));
 
         StarredLocation stored = repository
                 .findByUserIDAndLocationID("user_123", "location_1")
@@ -52,7 +51,6 @@ class StarServiceTests {
         assertThat(stored.latitude()).isEqualTo(10.729);
         assertThat(stored.longitude()).isEqualTo(106.694);
         assertThat(stored.starredAt()).isEqualTo(NOW);
-        assertThat(stored.weatherAlertsEnabled()).isFalse();
     }
 
     @Test
@@ -81,6 +79,39 @@ class StarServiceTests {
         assertThat(stars).extracting(StarredLocationResponse::locationID)
                 .containsExactlyInAnyOrder("shared_location", "user_123_location");
         assertThat(service.list("user_without_stars")).isEmpty();
+    }
+
+    @Test
+    void searchesStarsByNameOrAddressIgnoringCaseWhitespaceAndVietnameseAccents() {
+        service.create("user_123", new CreateStarRequest(
+                "da_nang",
+                "Đà Nẵng",
+                "Hải Châu, Việt Nam",
+                16.0544,
+                108.2022));
+        service.create("user_123", new CreateStarRequest(
+                "rmit",
+                "RMIT University",
+                "702 Nguyễn Văn Linh, Hồ Chí Minh City",
+                10.729,
+                106.694));
+        service.create("user_456", new CreateStarRequest(
+                "private_result",
+                "Da Nang private place",
+                "Another user's address",
+                16.0,
+                108.0));
+
+        assertThat(service.list("user_123", "  DA NANG "))
+                .extracting(StarredLocationResponse::locationID)
+                .containsExactly("da_nang");
+        assertThat(service.list("user_123", "nguyen van linh"))
+                .extracting(StarredLocationResponse::locationID)
+                .containsExactly("rmit");
+        assertThat(service.list("user_123", "not found")).isEmpty();
+        assertThat(service.list("user_123", "  "))
+                .extracting(StarredLocationResponse::locationID)
+                .containsExactlyInAnyOrder("da_nang", "rmit");
     }
 
     @Test

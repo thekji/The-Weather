@@ -10,8 +10,7 @@ public record StarredLocationResponse(
         String address,
         double latitude,
         double longitude,
-        Instant starredAt,
-        boolean weatherAlertsEnabled) {
+        Instant starredAt) {
 
     public static StarredLocationResponse from(StarredLocation location) {
         return new StarredLocationResponse(
@@ -20,7 +19,6 @@ public record StarredLocationResponse(
                 location.address(),
                 location.latitude(),
                 location.longitude(),
-                location.starredAt(),
-                location.weatherAlertsEnabled());
+                location.starredAt());
     }
 }

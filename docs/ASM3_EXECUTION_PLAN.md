@@ -61,7 +61,7 @@ The immediate milestone remains the smallest deployed path proving `Browser -> A
 2. Display that returned weather object in React and redeploy both affected ECS services; capture the complete P0-A path.
 3. Build a narrow Geoapify proof: Spring search/normalization first, then a React Leaflet map using Geoapify tiles and the selected marker coordinates.
 4. Treat the Geoapify proof as a prototype until validation, error handling, authentication, tests, deployment, attribution, and evidence satisfy the corresponding Sep 2-3 exit gates.
-5. Resume the remaining dependency order: DynamoDB implementation -> authentication -> stars -> posts/feedback/S3 -> analytics.
+5. Resume the remaining dependency order: DynamoDB implementation -> authentication -> stars -> posts/weather-accuracy ratings/S3 -> analytics.
 
 This checkpoint changes neither the 9 September implementation/documentation freeze nor the 10-12 September testing/submission dates.
 
@@ -84,20 +84,20 @@ The following set already exceeds the 25-point implementation cap. More services
 | Containers | ECS/Fargate | 6 | Browser request reaches both the deployed React/Nginx frontend service and Spring Boot backend service |
 | Networking/content delivery and API | API Gateway | 6 | A real UI operation causes the backend to call a deployed route integrated with Lambda |
 | Storage | S3 | 3 | Application uploads/retrieves a community image and/or writes the analytics dataset without manual intervention |
-| Database | DynamoDB | 3 | UI creates and queries real users, stars, posts, and feedback |
+| Database | DynamoDB | 3 | UI creates and queries real users, stars, and community posts |
 | Load-balancing support | Application Load Balancer | Do not rely on separate marks | ALB automatically routes `/*` to the frontend target group and `/api/*` to the backend target group |
 | Analytics | Athena | 3 | The application obtains Athena-derived values and displays them on the dashboard |
 | Analytics/catalog | Glue | 3 | Export code or a schedule starts the crawler; the crawler registers the S3 dataset for Athena |
 | External API type 1 | Open-Meteo | 2 | UI displays normalized current/forecast weather returned through API Gateway/Lambda; the server also captures a post-time snapshot |
 | External API type 2 | Geoapify | 2 | UI search goes through Spring Boot to Geoapify and receives a normalized persistable location; the browser renders the same selected coordinates with Geoapify map tiles |
 
-Only two external API types can be graded. The application deliberately uses exactly **two** external providers: Geoapify for normalized search/geocoding and map tiles, and Open-Meteo for weather. Geoapify is one provider claim even though two of its products are used. ECS, Lambda, and API Gateway count once per service type, not once per container, function, or route. Do not claim two ECS marks because there are two services, and do not claim nested resources such as an ECS/Elastic Beanstalk-created EC2 instance as separate marks. Use API Gateway as the clear Networking and Content Delivery/API-category service; treat ALB as required ECS routing support and do not depend on a separate ALB mark unless the tutor confirms it. ECR, IAM, CloudWatch, EventBridge, and SNS are useful supporting services, but do not rely on them to reach the 25-point cap.
+Only two external API types can be graded. The application deliberately uses exactly **two** external providers: Geoapify for normalized search/geocoding and map tiles, and Open-Meteo for weather. Geoapify is one provider claim even though two of its products are used. ECS, Lambda, and API Gateway count once per service type, not once per container, function, or route. Do not claim two ECS marks because there are two services, and do not claim nested resources such as an ECS/Elastic Beanstalk-created EC2 instance as separate marks. Use API Gateway as the clear Networking and Content Delivery/API-category service; treat ALB as required ECS routing support and do not depend on a separate ALB mark unless the tutor confirms it. ECR, IAM, and CloudWatch are useful supporting services, but do not rely on them to reach the 25-point cap.
 
 ### Definition of "fully implemented and automated"
 
 Do not claim a service until all five statements are true:
 
-1. A user interface action, application code, EventBridge, or another service invokes it.
+1. A user interface action, application code, or another service invokes it.
 2. The operation uses the deployed AWS resource, not a mock or local replacement.
 3. The result changes application behavior or appears in the UI.
 4. A repeatable test and log/screenshot prove the invocation.
@@ -122,24 +122,21 @@ Creating a bucket, table, function, crawler, topic, or cluster in the AWS Consol
 - Pass the selected latitude/longitude to browser-side Geoapify map tiles for interactive display only.
 - View current, hourly, and multi-day weather through Spring Boot -> API Gateway -> Lambda -> Open-Meteo.
 - Display deterministic recommendations for rain, UV, wind, temperature, and snow when their required Open-Meteo fields are available.
-- Star, unstar, list, and enable/disable alerts for persisted Geoapify locations.
-- Create and list community posts whose only user observation field is `description`; attach the exact server-captured `apiWeather` snapshot.
-- Attach **zero or one** validated image through direct browser PUT to a private S3 pre-signed URL.
-- Mark a post `HELPFUL` or `NOT_HELPFUL` with duplicate-safe counters.
+- Star, unstar, and list persisted Geoapify locations.
+- Create and list community posts with `description`, the post author's required `weatherAccuracyRating`, and the exact server-captured `apiWeather` snapshot.
+- Attach **zero to three** validated images through Spring Boot `PutObject` calls to private S3.
 
 ### P0-C - marked data/analytics path and assessment evidence
 
 - Use the frozen DynamoDB tables, keys, and `LocationPostsIndex`; do not use a normal-feed scan.
 - Export community/application data from DynamoDB to S3, catalogue it with Glue, and query it with Athena.
 - Start/reuse the Glue catalogue step through application code or a schedule so the demonstrated analytics flow is automated, not Console-dependent.
-- Display at least three real community metrics, such as total posts, posts by location, and helpful percentage.
+- Display at least three real community metrics, such as total posts, posts by location, and average weather accuracy.
 - Finish the rubric-aligned architecture report, evidence matrix, test matrix, and reproducible release package.
 
 ### P1 - implement only after the complete P0 user journey works
 
 - Historical weather for a validated selected date.
-- EventBridge weather checks, system-defined `AlertRules`, per-alert-type cooldowns in `AlertState.lastTriggeredAlerts`, and one SNS email-alert workflow.
-- One confirmed demonstration email without adding an alert-history table.
 
 ### P2 - cut first if the schedule slips
 
@@ -148,7 +145,7 @@ Creating a bucket, table, function, crawler, topic, or cluster in the AWS Consol
 - Advanced filters or maps, infrastructure-as-code, and nonessential build automation.
 - Sophisticated filtering, caching, animations, or visual effects.
 
-The following are **out of scope**, not P2 backlog: a separate map/geocoding provider such as Mapbox, Open-Meteo geocoding, a separate Locations table, a WeatherSnapshot table, an Alerts history table, daily weather-summary emails, continuously storing normal weather queries in S3, user-defined alert thresholds, structured community-condition fields, forecast-versus-observation matching/scoring, comments, followers, messaging, and AI features.
+The following are **out of scope**, not P2 backlog: a separate map/geocoding provider such as Mapbox, Open-Meteo geocoding, a separate Locations table, a WeatherSnapshot table, notification workflows, daily weather-summary emails, continuously storing normal weather queries in S3, user-defined thresholds, structured community-condition fields, automatic forecast-versus-observation scoring, comments, followers, messaging, and AI features.
 
 An unfinished claimed feature is worse than a smaller feature that is complete, automated, tested, documented, and easily demonstrated.
 
@@ -180,19 +177,16 @@ Application Load Balancer
 
 Browser receives selected latitude/longitude ----------> Geoapify map tiles via Leaflet
 
-EventBridge --> alert Lambda --> StarredLocations + AlertRules + AlertState
-                               --> Open-Meteo --> SNS email --> AlertState update
-EventBridge/UI --> export Lambda --> DynamoDB community data --> S3 --> Glue --> Athena
+Application/export trigger --> export Lambda --> DynamoDB community data --> S3 --> Glue --> Athena
 ```
 
 Freeze these runtime sequences and reproduce them in the report diagrams:
 
 - **Location:** React -> ALB -> Spring -> Geoapify Search/Geocoding API -> Spring normalization -> React; selected coordinates -> Geoapify map tiles/marker via Leaflet.
 - **Weather:** React -> ALB -> Spring -> API Gateway -> weather Lambda -> Open-Meteo -> normalized result -> React.
-- **Image:** React -> Spring pre-sign -> short-lived URL -> React direct PUT -> private S3; post creation -> Spring-authorized `imageKeys` -> DynamoDB.
+- **Image:** React multipart upload -> Spring validation and server-owned keys -> private S3 `PutObject`; DynamoDB stores `imageKeys`; Spring returns short-lived presigned GET URLs.
 - **Post snapshot:** Spring post creation -> API Gateway -> weather Lambda -> Open-Meteo -> exact `apiWeather` -> `CommunityPosts`.
 - **Analytics:** DynamoDB community data -> export Lambda -> S3 -> Glue -> Athena; React -> Spring -> API Gateway -> analytics Lambda -> Athena -> React.
-- **Alerts:** EventBridge -> alert Lambda -> StarredLocations/Open-Meteo/AlertRules/AlertState -> cooldown -> SNS -> AlertState update.
 
 Required deployment details:
 
@@ -222,7 +216,7 @@ Use the Spring Boot ECS backend for:
 
 - authentication and authorization;
 - Geoapify location/address/POI search, raw-response handling, normalization, and persisted-location validation;
-- users, stars, community posts, feedback, and image/post association;
+- users, stars, community posts, author weather-accuracy ratings, and image/post association;
 - DynamoDB writes/queries;
 - generating server-owned S3 object keys and short-lived pre-signed upload/download URLs;
 - acting as the same-origin application facade that calls the API Gateway weather and analytics routes.
@@ -232,9 +226,9 @@ Use API Gateway and Lambda for:
 - current/forecast/historical weather adapters and the post-time weather snapshot;
 - Open-Meteo response normalization and recommendation rules;
 - analytics queries;
-- scheduled exports and alert checks.
+- scheduled or on-demand exports.
 
-The browser uses Geoapify Map Tiles through Leaflet only to draw the interactive map and marker from the selected normalized coordinates. Spring remains the only Geoapify search/geocoding and normalization boundary; the browser must not use a client-side search control or raw map-tile data as the persisted location identity. The same selected coordinates must be used for map display, weather, and starring. Spring should validate/authenticate the incoming request and forward only required weather or analytics parameters; Lambda owns Open-Meteo normalization, recommendation, and Athena-query behavior. Do not implement the same business rule in both layers. Spring returns pre-signed URLs but never proxies image bytes. Normal Open-Meteo requests are not continuously copied to S3; the analytics prefix contains community/application data only. This extra backend-to-API-Gateway hop avoids browser CORS and hides internal serverless URLs, but the report should acknowledge its latency/complexity trade-off. API Gateway Lambda proxy integration is documented by AWS at [Lambda proxy integrations in API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html). Geoapify documents browser map-tile usage and supported renderers in [Geoapify Maps API](https://apidocs.geoapify.com/docs/maps/).
+The browser uses Geoapify Map Tiles through Leaflet only to draw the interactive map and marker from the selected normalized coordinates. Spring remains the only Geoapify search/geocoding and normalization boundary; the browser must not use a client-side search control or raw map-tile data as the persisted location identity. The same selected coordinates must be used for map display, weather, and starring. Spring should validate/authenticate the incoming request and forward only required weather or analytics parameters; Lambda owns Open-Meteo normalization, recommendation, and Athena-query behavior. Do not implement the same business rule in both layers. React submits bounded multipart image bytes to Spring; Spring uploads them to private S3 and returns short-lived presigned GET URLs when posts are read. Normal Open-Meteo requests are not continuously copied to S3; the analytics prefix contains community/application data only. This extra backend-to-API-Gateway hop avoids browser CORS and hides internal serverless URLs, but the report should acknowledge its latency/complexity trade-off. API Gateway Lambda proxy integration is documented by AWS at [Lambda proxy integrations in API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html). Geoapify documents browser map-tile usage and supported renderers in [Geoapify Maps API](https://apidocs.geoapify.com/docs/maps/).
 
 ### 5.3 Freeze provider boundaries and location identity
 
@@ -259,52 +253,39 @@ The provider split is final:
 
 Never expose raw Geoapify search results, perform browser-side search that bypasses Spring normalization, use Open-Meteo geocoding as the primary search, add a second map provider, or invent provider-specific application field names. The canonical application identifier is always `locationID`. Show the required Geoapify/OpenStreetMap/OpenMapTiles map attribution and Open-Meteo attribution in the UI/report, and verify each provider's current terms before release.
 
-### 5.4 Freeze the description-only community-post model
+### 5.4 Freeze the weather-accuracy community-post model
 
-The user supplies only a validated `description` and, optionally, one image. The server captures Open-Meteo weather at post creation. Display the description and captured snapshot together, but do not calculate or claim a match between them.
+The user supplies a validated `description`, a required 1-5 `weatherAccuracyRating`, and zero to three optional images. The server captures Open-Meteo weather at post creation. Display the description, captured snapshot, and author-selected rating together, but do not calculate or claim an automatic match score.
 
 `CommunityPosts` has main partition key `postID` and **no main sort key**. Its attributes are:
 
 - `postID`, `userID`, `locationID`, `locationName`, `address`, `latitude`, `longitude`;
-- `description`, `imageKeys`, `createdAt`, `helpfulCount`, `notHelpfulCount`;
+- `description`, `imageKeys`, `createdAt`, `weatherAccuracyRating`, `helpfulCount`, `notHelpfulCount`, `feedType=COMMUNITY`;
 - `apiWeather.recordedAt`;
-- `apiWeather.temperature_2m`;
-- `apiWeather.relative_humidity_2m`;
-- `apiWeather.apparent_temperature`;
-- `apiWeather.precipitation_probability`;
-- `apiWeather.precipitation`;
-- `apiWeather.rain`;
-- `apiWeather.is_day`;
-- `apiWeather.wind_speed_10m`;
-- `apiWeather.wind_direction_10m`;
 - `apiWeather.weather_code`.
+- `apiWeather.condition`.
 
-Create `LocationPostsIndex` with partition key `locationID` and sort key `createdAt`. Query it newest-first with `ScanIndexForward=false`; never scan the table for the normal location feed. `precipitation_probability` is a percentage, while `precipitation` and `rain` are millimetres. Do not add aliases, `forecastTime`, condition enums, observed measurements, or matching labels.
+Create `LocationPostsIndex` with partition key `locationID` and sort key `createdAt`, and `CommunityFeedIndex` with partition key `feedType` and sort key `createdAt`. Query both newest-first with `ScanIndexForward=false` and cursor pagination; never scan the table for either feed. Do not add aliases, `forecastTime`, observed measurements, or automatic scoring fields.
 
 ### 5.5 Use the exact access-pattern-driven DynamoDB design
 
 | Table | Keys/indexes and required attributes | Main access pattern |
 |---|---|---|
 | `Users` | PK normalized `email`; `userID`, `name`, `passwordHash`, `createdAt`; registration uses a conditional put | Register/login and atomically enforce unique email |
-| `StarredLocations` | PK `userID`, SK `locationID`; `name`, `address`, `latitude`, `longitude`, `starredAt`, `weatherAlertsEnabled` | List one user's stars; star/unstar; toggle alerts |
-| `CommunityPosts` | PK `postID`; fields from Section 5.4; GSI `LocationPostsIndex` PK `locationID`, SK `createdAt` | Direct post access and newest-first location feed |
-| `PostFeedback` | PK `postID`, SK `userID`; `feedbackType`, `createdAt` | Prevent duplicate feedback and enforce `HELPFUL`/`NOT_HELPFUL` |
-| `AlertRules` | PK `alertRuleID`; `alertType`, `metric`, `operator`, `threshold`, `enabled` | Load system-defined alert rules |
-| `AlertState` | PK `userID`, SK `locationID`; `lastTriggeredAlerts` map | Store an independent last-trigger timestamp for each alert type |
+| `StarredLocations` | PK `userID`, SK `locationID`; `name`, `address`, `latitude`, `longitude`, `starredAt` | List one user's stars; star/unstar |
+| `CommunityPosts` | PK `postID`; fields from Section 5.4; GSIs `LocationPostsIndex` (`locationID`, `createdAt`) and `CommunityFeedIndex` (`feedType`, `createdAt`) | Direct post access plus newest-first location and global feeds; atomically maintain feedback counters |
+| `PostFeedback` | PK `postID`, SK `userID`; `feedbackType`, `createdAt`; no GSI | Set, switch, or remove one current feedback choice and query-by-post cleanup |
 
-Feedback uses a DynamoDB transaction or equivalent conditional and atomic operations: insert/update the user's feedback and adjust counters safely. If vote changes are supported, decrement the old counter and increment the new counter in the same correct operation. If they are not supported, return a controlled duplicate/conflict response. There is no separate Locations table, WeatherSnapshot table, Alerts history table, or daily-summary table.
-
-The alert path is `EventBridge -> alert Lambda -> alert-enabled StarredLocations -> Open-Meteo -> AlertRules evaluation -> AlertState cooldown -> SNS -> AlertState update`. The small assessment deployment may filter/scan stars for P1, but the report must identify that as a scale limitation rather than claim an undefined index.
+`weatherAccuracyRating` is validated as an integer from 1 to 5 during post creation and is stored directly on `CommunityPosts`. Community Helpful / Not Helpful feedback is independent and stores at most one current choice per user/post in `PostFeedback`; the user may switch or remove that choice. There is no separate Locations table, WeatherSnapshot table, alert table, or daily-summary table.
 
 ### 5.6 Bound the private-S3 image flow
 
-1. React requests `POST /api/uploads/presign` with permitted file metadata.
-2. Spring authenticates the user, validates type/size, creates a server-owned object key, associates it with the user/post workflow, and returns a short-lived PUT URL.
-3. React uploads bytes directly to the private S3 bucket.
-4. Post creation stores only authorized `imageKeys`.
-5. React requests `GET /api/posts/{postID}/image-url`; Spring checks access and returns a short-lived read URL.
+1. React submits `POST /api/locations/{locationID}/posts` as multipart data with the JSON post fields and zero to three image files.
+2. Spring authenticates the user, validates count/type/size, and creates server-owned object keys.
+3. Spring uploads the bytes to the private S3 bucket and stores only the generated `imageKeys` on the post.
+4. Post read/feed responses replace persistent keys with short-lived presigned GET URLs.
 
-For P0, permit zero or one image, JPEG/PNG/WebP only, with a documented limit such as 5 MB. Enable S3 Block Public Access and narrow CORS/IAM permissions. Never accept an arbitrary client-supplied key or imply Spring proxies image bytes. An SNS email subscription must be confirmed before it receives messages; document whether the lab supports one demonstration address or genuine per-user routing. See [Amazon SNS email subscription setup](https://docs.aws.amazon.com/sns/latest/dg/sns-email-notifications.html).
+Permit zero to three images, JPEG/PNG/WebP only, with a 5 MB per-file limit. Enable S3 Block Public Access and narrow IAM permissions. Never accept an arbitrary client-supplied key.
 
 ## 6. Minimum API contract
 
@@ -319,12 +300,11 @@ GET    /api/locations/search?q=
 GET    /api/stars
 POST   /api/stars
 DELETE /api/stars/{locationID}
-PATCH  /api/stars/{locationID}/alerts
 GET    /api/locations/{locationID}/posts
 POST   /api/locations/{locationID}/posts
-POST   /api/posts/{postID}/feedback
-POST   /api/uploads/presign
-GET    /api/posts/{postID}/image-url
+GET    /api/posts?cursor=&limit=
+GET    /api/posts/{postID}
+DELETE /api/posts/{postID}
 GET    /api/weather?latitude=&longitude=&timezone=
 GET    /api/weather/history?latitude=&longitude=&date=&timezone=
 GET    /api/analytics/summary
@@ -365,8 +345,7 @@ weather/
 |   `-- src/main/java/com/the/weather/lambda/
 |       |-- WeatherHandler.java
 |       |-- AnalyticsHandler.java
-|       |-- ExportHandler.java
-|       `-- AlertHandler.java
+|       `-- ExportHandler.java
 |-- infra/
 |-- data/
 |-- docs/
@@ -414,14 +393,14 @@ Do not infer completion from a date alone. Use the verified progress snapshot in
 |---|---|---|
 | **Reschedule from 1 September** | AWS permissions; DynamoDB keys/GSIs; endpoint/DTO contracts; Spring and React builds; health endpoint; both Docker images; ECR pushes; ECS services; target groups; ALB routing; minimal Lambda; API Gateway; Spring invocation; browser-visible walking skeleton | Execute in the order shown for 1 September unless verified evidence already exists |
 | **Covered by revised work, but verify** | P0/P1/P2 scope; two-ECS/one-ALB design; repository/evidence structure; rubric traceability; README/configuration | Check each artifact before relying on it; create or correct it in the matching later block if absent |
-| **Optional/cut** | Early UI polish, elaborate scaffolding, infrastructure-as-code, nonessential automation, early SNS setup before core works | Do only after all P0 gates, report, and evidence are safe |
-| **Superseded** | Separate map/geocoding providers including Mapbox; Open-Meteo geocoding; provider-specific saved IDs; structured community observations; match scoring; Alerts history; daily summaries; continuous weather storage; environmental analytics; the old 30-31 August gates | Do not implement or carry forward |
+| **Optional/cut** | Early UI polish, elaborate scaffolding, infrastructure-as-code, and nonessential automation | Do only after all P0 gates, report, and evidence are safe |
+| **Superseded** | Separate map/geocoding providers including Mapbox; Open-Meteo geocoding; provider-specific saved IDs; structured community observations; match scoring; notification history; daily summaries; continuous weather storage; environmental analytics; the old 30-31 August gates | Do not implement or carry forward |
 
 ### Tuesday 1 September - P0-A cloud walking skeleton
 
 #### 08:00-12:00
 
-1. **08:00-08:45 - Verify AWS permissions.** In the assigned region, test or inspect permission for ECR, ECS/Fargate, ALB, Lambda, API Gateway, DynamoDB, S3, Glue, Athena, EventBridge, SNS, IAM, and CloudWatch. Record allowed/denied operations; send exact denials to the tutor.
+1. **08:00-08:45 - Verify AWS permissions.** In the assigned region, test or inspect permission for ECR, ECS/Fargate, ALB, Lambda, API Gateway, DynamoDB, S3, Glue, Athena, IAM, and CloudWatch. Record allowed/denied operations; send exact denials to the tutor.
 2. **08:45-09:30 - Freeze DynamoDB.** Record every table, partition/sort key, `LocationPostsIndex`, attribute name, and required access pattern from Section 5.5.
 3. **09:30-10:00 - Freeze contracts.** Record Section 6 routes, DTOs, normalized Geoapify output, exact `apiWeather` names, validation, authentication, and error shape.
 4. **10:00-10:45 - Verify Spring build.** Run the clean production build and fix only build/configuration blockers.
@@ -466,7 +445,7 @@ Do not infer completion from a date alone. Use the verified progress snapshot in
 - If the P0-A exit gate is open, finish only that skeleton first; large features remain blocked.
 - Create the frozen DynamoDB tables/GSIs and least-privilege Spring task permissions.
 - Implement repository adapters/test doubles and a consistent validation/error contract.
-- Audit exact names: `userID`, `postID`, `locationID`, `alertRuleID`; correct casing before frontend work begins.
+- Audit exact names: `userID`, `postID`, `locationID`, and `weatherAccuracyRating`; correct casing before frontend work begins.
 
 **Dependency:** the 1 September walking skeleton. If it is incomplete, P2 is already cut.
 
@@ -499,9 +478,9 @@ Do not infer completion from a date alone. Use the verified progress snapshot in
 #### 08:00-12:00
 
 - Pass the selected normalized coordinates to Geoapify Map Tiles through Leaflet and render the interactive marker; add attribution and controlled loading/error states.
-- Implement `GET/POST /api/stars`, delete, and alert-toggle routes using exact `StarredLocations` fields.
+- Implement `GET/POST /api/stars` and delete routes using exact `StarredLocations` fields.
 - Persist the normalized `latitude`/`longitude` names unchanged; do not invent a second location identity or coordinate alias.
-- Connect star/list/unstar/toggle UI and test with two users.
+- Connect star/list/unstar UI and test with two users.
 
 **Dependency:** deployed normalized Geoapify selection and authentication.
 
@@ -529,13 +508,13 @@ Do not infer completion from a date alone. Use the verified progress snapshot in
 
 **Exit gate:** a fresh account completes `search -> select -> map -> weather -> star` in the deployed application.
 
-### Friday 4 September - description-only community posts and feedback
+### Friday 4 September - community posts and weather accuracy ratings
 
 #### 08:00-12:00
 
-- Implement post creation with location fields, validated `description`, optional `imageKeys`, timestamps, and zeroed counters.
-- Capture Open-Meteo weather server-side at creation and store exactly the Section 5.4 `apiWeather` fields and units.
-- Implement location-feed access through `LocationPostsIndex` with pagination and newest-first ordering.
+- Implement post creation with location fields, validated `description`, required `weatherAccuracyRating`, optional `imageKeys`, and timestamps.
+- Capture Open-Meteo weather server-side at creation and store exactly the simplified Section 5.4 `apiWeather` fields.
+- Implement location and global feeds through their GSIs with cursor pagination and newest-first ordering.
 
 **Dependency:** deployed Open-Meteo adapter and frozen DynamoDB tables/indexes.
 
@@ -543,67 +522,66 @@ Do not infer completion from a date alone. Use the verified progress snapshot in
 
 #### 13:00-18:00
 
-- Implement the deployed description-only post form and feed; display description plus captured API weather without matching labels.
-- Implement `HELPFUL`/`NOT_HELPFUL` using conditional/transactional writes and atomic counters.
-- Decide and document whether a vote can change. If yes, adjust both old/new counters atomically; if no, return a controlled conflict.
+- Implement the deployed post form and feed; display description plus captured API weather and the author's weather-accuracy rating.
+- Add the required five-choice rating selector and reject missing or out-of-range ratings.
 
 **Dependency:** post create/list backend and authenticated location page.
 
-**Exit gate:** a user can create/read a post and give duplicate-safe feedback while counters remain correct.
+**Exit gate:** a user can create/read a post with a 1-5 weather-accuracy rating, and that rating appears in location and global feeds.
 
 #### 20:00-00:00
 
-- Test empty/oversized description, exact snapshot names, server-side capture, location isolation, empty feed, `LocationPostsIndex`, newest-first order, both feedback types, duplicate/concurrent feedback, and vote-change rule.
+- Test empty/oversized description, missing/invalid/boundary ratings, exact snapshot names, server-side capture, location isolation, empty feed, `LocationPostsIndex`, and newest-first order.
 - Deploy and run the flow with two users.
-- Capture request, UI, DynamoDB item/GSI, counter, and CloudWatch evidence; update report examples.
+- Capture request, UI, DynamoDB item/GSI, rating, and CloudWatch evidence; update report examples.
 
-**Dependency:** afternoon UI and feedback path.
+**Dependency:** afternoon UI and rating path.
 
-**Exit gate:** the deployed text-community flow works end to end and contains no structured observation or automatic comparison field.
+**Exit gate:** the deployed community flow works end to end and contains no structured observation or automatic comparison field.
 
 ### Saturday 5 September - S3 images and complete P0 user journey
 
 #### 08:00-12:00
 
-- Create a private image bucket, block public access, configure narrow CORS, lifecycle if appropriate, and least-privilege IAM.
-- Implement `POST /api/uploads/presign` with authentication, permitted metadata, server-owned key generation, and a short-lived PUT URL.
-- Enforce at most one JPG/PNG/WebP image and the documented size limit before issuing the URL.
+- Create a private image bucket, block public access, configure lifecycle if appropriate, and least-privilege IAM.
+- Implement authenticated multipart post creation with server-owned object-key generation and Spring-to-S3 `PutObject` uploads.
+- Enforce at most three JPG/PNG/WebP images and the 5 MB per-file limit.
 
 **Dependency:** authenticated post flow and stable post ownership rules.
 
-**Exit gate:** an authenticated user can obtain a bounded pre-signed PUT URL; invalid types/sizes and arbitrary keys are rejected.
+**Exit gate:** an authenticated user can create a post with zero to three bounded images; invalid types/sizes are rejected and clients cannot choose object keys.
 
 #### 13:00-18:00
 
-- Upload bytes directly from React to the private S3 URL; Spring must not proxy them.
-- Store only an authorized `imageKeys` value with the post.
-- Implement `GET /api/posts/{postID}/image-url` with ownership/access checks and a short-lived read URL.
-- Add progress/error/display handling; test expired URL, missing object, invalid file, arbitrary key attempt, and no-image post.
+- Submit image bytes from React in the multipart post request and upload them from Spring to private S3.
+- Store only server-generated `imageKeys` values with the post.
+- Return short-lived presigned GET URLs in post and feed responses.
+- Add progress/error/display handling; test missing object, invalid file, too many files, and no-image posts.
 
-**Dependency:** pre-sign route, bucket CORS, and task IAM.
+**Dependency:** multipart route, private bucket, and task IAM.
 
-**Exit gate:** an optional image uploads directly to private S3 and displays through a time-limited URL; public access remains blocked.
+**Exit gate:** optional images upload through Spring to private S3 and display through time-limited URLs; public access remains blocked.
 
 #### 20:00-00:00
 
-- Deploy and run the whole core journey: fresh user -> Geoapify search -> Geoapify map -> Open-Meteo weather -> star -> description-only post with/without image -> feed -> feedback.
+- Deploy and run the whole core journey: fresh user -> Geoapify search -> Geoapify map -> Open-Meteo weather -> star -> post with/without image -> feed -> rating display.
 - Fix only P0 defects.
 - Capture final-quality service/UI proof and draft Links, Summary, Introduction, features, provider responsibilities, and component justification.
 
 **Dependency:** all P0-B slices.
 
-**Exit gate:** the complete P0-B community journey works in AWS. If it does not, cut historical weather and alerts; use 6-7 September only for P0-B, required analytics, evidence, and documentation.
+**Exit gate:** the complete P0-B community journey works in AWS. If it does not, cut historical weather and use 6-7 September only for P0-B, required analytics, evidence, and documentation.
 
 ### Sunday 6 September - automated analytics path
 
 #### 08:00-12:00
 
 - If any P0-B gate is open, fix it first and retain only the smallest complete analytics query set.
-- Freeze a community-data-only export schema for total posts, posts per day/location/user, active locations, feedback totals/helpful percentage, and activity over time.
+- Freeze a community-data-only export schema for total posts, posts per day/location/user, active locations, average weather accuracy, rating distribution, and activity over time.
 - Implement a safe repeatable export Lambda: DynamoDB community/application data -> versioned/partitioned JSON or CSV in a dedicated S3 prefix.
 - Test empty and repeated exports. Do not export normal Open-Meteo query history.
 
-**Dependency:** stable `CommunityPosts` and `PostFeedback` data.
+**Dependency:** stable `CommunityPosts` data.
 
 **Exit gate:** the export Lambda writes valid community data to S3 and safely handles an empty dataset/repeated run.
 
@@ -633,23 +611,20 @@ Do not infer completion from a date alone. Use the verified progress snapshot in
 
 - If any P0-A/B/C gate is open, work only on P0, evidence, or report-critical defects.
 - Otherwise implement historical Open-Meteo weather with validated date/coordinates and deployed UI/tests.
-- Create the exact `AlertRules` and `AlertState` access paths. Store cooldowns as independent timestamps by alert type in `lastTriggeredAlerts`; do not create an Alerts history table.
 
 **Dependency:** all P0 gates remain green.
 
-**Exit gate:** P0 regression stays green; historical weather works if retained; alert rule/state reads and per-type timestamps are tested.
+**Exit gate:** P0 regression stays green; historical weather works if retained.
 
 #### 13:00-18:00
 
-- Implement `EventBridge -> alert Lambda -> alert-enabled StarredLocations -> Open-Meteo -> AlertRules -> AlertState cooldown -> SNS -> AlertState update`.
-- Use fixed system rules, not user-defined thresholds. Confirm the SNS subscription and connect alert enable/disable UI.
-- Test enabled/disabled, trigger/no-trigger, retry/idempotency, cooldown, and independent timestamps for different alert types.
+- Use this block for P0 regression, analytics evidence, documentation, and deployment stabilization.
 
-**Dependency:** stars, Open-Meteo, rule/state models, and confirmed demonstration email.
+**Dependency:** all retained P0 and analytics paths.
 
-**Exit gate:** a scheduled trigger produces the correct email and state update without manual runtime intervention.
+**Exit gate:** every retained feature remains tested, evidenced, and documented.
 
-**Hard cut at 18:00:** if that exit gate fails, stop P1 alert work and remove incomplete EventBridge/SNS claims from the final architecture. Never sacrifice P0, analytics, report, or formal testing for alerts.
+**Hard cut at 18:00:** never sacrifice P0, analytics, report, or formal testing for lower-priority work.
 
 #### 20:00-00:00
 
@@ -747,16 +722,15 @@ Run the fresh-user functional matrix:
 - Geoapify valid search, blank/invalid query, no result, upstream failure, normalized result, and stable `locationID` persistence;
 - identical selected-coordinate handoff to the Geoapify map and to the Open-Meteo weather path;
 - current/hourly/multi-day weather and historical weather if retained;
-- star/unstar/list/alert toggle and cross-user ownership;
+- star/unstar/list and cross-user ownership;
 - text-only post and optional-image post, correct `locationID`, exact server-captured `apiWeather`, private-S3 URL flow, and invalid input/file;
 - `LocationPostsIndex`, location isolation, pagination, and newest-first ordering without a scan;
-- `HELPFUL`/`NOT_HELPFUL`, duplicate prevention, atomic counters, and vote-change correctness if supported;
+- required rating validation, rating persistence, and rating display in location/global feeds;
 - community-data export, S3 object, Glue discovery, Athena query, dashboard result, and empty dataset;
-- retained alerts: enabled/disabled, trigger/no-trigger, cooldown, and independent timestamp per alert type.
 
 #### 20:00-00:00
 
-- Correlate UI actions with ALB/ECS, API Gateway, Lambda, DynamoDB, S3, Glue/Athena, EventBridge/SNS, and CloudWatch evidence.
+- Correlate UI actions with ALB/ECS, API Gateway, Lambda, DynamoDB, S3, Glue/Athena, and CloudWatch evidence.
 - Restart an ECS task and repeat the smoke test.
 - Triage defects by severity: P0 release blocker, P1 report/demo issue, P2 cosmetic.
 - Fix and rerun only the affected regression set.
@@ -765,11 +739,11 @@ Run the fresh-user functional matrix:
 
 #### 09:00-12:00
 
-- Test missing/invalid/expired JWT, ID tampering, cross-user reads/writes, duplicate feedback, invalid coordinates/date, XSS-like text, oversized/wrong-type upload, arbitrary S3 key, and absent data.
+- Test missing/invalid/expired JWT, ID tampering, cross-user reads/writes, missing/invalid ratings, invalid coordinates/date, XSS-like text, oversized/wrong-type upload, arbitrary S3 key, and absent data.
 
 #### 13:00-18:00
 
-- Test upstream timeout/error, Lambda failure response, Athena timeout/empty results, scheduled duplicate-alert cooldown, mobile/tablet/desktop layout, and at least two browsers.
+- Test upstream timeout/error, Lambda failure response, Athena timeout/empty results, mobile/tablet/desktop layout, and at least two browsers.
 - Test Geoapify and Open-Meteo failures independently; verify a provider failure cannot silently substitute stale data from another provider.
 - Review IAM, bucket public-access block, logs, account budget/session time, and live-service startup procedure.
 
@@ -809,8 +783,7 @@ Recommended final structure:
 6. **System Architecture (5)**
    - system context diagram;
    - deployment/component diagram;
-   - complete interaction flows for weather, community image post/feedback, and analytics;
-   - alert sequence if implemented;
+   - complete interaction flows for weather, community image posts with ratings, and analytics;
    - labels on every arrow showing direction, protocol, endpoint/event, and returned data.
 7. **System Component Descriptions (1)** - purpose, automated invocation, appropriateness, security/configuration, and alternative/trade-off for every component.
 8. **Datasets, Data Structures, and APIs (1)**
@@ -842,7 +815,6 @@ Maintain this table from the first deployed feature:
 | Create post/snapshot | ECS, API Gateway, Lambda, Open-Meteo, DynamoDB | UI -> Spring -> weather Lambda -> Open-Meteo -> exact `apiWeather` -> `CommunityPosts` | Description + snapshot | item + Lambda request ID | filename | 6.x/8.x | |
 | Upload image | ECS, S3 | UI -> Spring pre-sign -> direct S3 PUT -> Spring stores authorized key -> signed read URL | Image in feed | upload test + S3 key | filename | 6.x/8.x | |
 | View analytics | DynamoDB, S3, Glue, Athena, Lambda, API Gateway, ECS | export Lambda -> community data in S3 -> Glue -> Athena; UI -> ALB -> Spring -> API Gateway -> analytics Lambda -> Athena | Cards/chart | query ID + result | filename | 6.x/8.x | |
-| Receive alert | EventBridge, Lambda, DynamoDB, Open-Meteo, SNS | schedule -> alert Lambda -> stars/rules/state + Open-Meteo -> cooldown -> SNS -> state update | Email | invocation ID + per-type state timestamp | filename | 6.x | |
 
 For each service, be ready to answer:
 
@@ -858,13 +830,12 @@ For each service, be ready to answer:
 
 1. **AWS permission failure discovered on 1 September:** record the exact denied action/service and contact the tutor immediately. Continue reversible local contracts/tests, but do not silently redesign the marked architecture.
 2. **Walking skeleton not live by 1 September 23:59:** carry only its unfinished steps into 2 September morning and cut P2 immediately. Do not start a large feature until the skeleton works.
-3. **Core user journey not live by 5 September 23:59:** stop historical weather and alerts. Stabilize auth, weather, DynamoDB, posts, S3, ECS, Lambda, and API Gateway.
+3. **Core user journey not live by 5 September 23:59:** stop historical weather. Stabilize auth, weather, DynamoDB, posts, S3, ECS, Lambda, and API Gateway.
 4. **Analytics not live by 6 September 23:59:** reduce to one compact community-data export schema and three simple queries. Keep one complete Athena path; cut elaborate charts.
-5. **Alerts not live by 7 September 18:00:** remove alerts/EventBridge/SNS from the claimed final architecture and use the time for P0, report, and evidence.
-6. **Any service still manual on 8 September:** automate it or remove it from the claimed mark set and main diagram.
-7. **After 9 September freeze:** only reproduce, fix, test, and document a verified defect. No feature expansion.
+5. **Any service still manual on 8 September:** automate it or remove it from the claimed mark set and main diagram.
+6. **After 9 September freeze:** only reproduce, fix, test, and document a verified defect. No feature expansion.
 
-At every cutoff, remove work in this order: P2 first, then historical weather and alerts. Never cut the walking skeleton, core provider/location/weather flow, auth/community/S3 flow, required analytics path, testing, evidence, or report to rescue a lower-priority feature.
+At every cutoff, remove work in this order: P2 first, then historical weather. Never cut the walking skeleton, core provider/location/weather flow, auth/community/S3 flow, required analytics path, testing, evidence, or report to rescue a lower-priority feature.
 
 ## 14. Demo plan
 
@@ -872,8 +843,8 @@ The assignment is demo-based and the brief allows about 30 minutes including Q&A
 
 1. 0:00-2:00 - problem, users, objective, and why it is a cloud application.
 2. 2:00-5:00 - one architecture diagram and the six required AWS categories.
-3. 5:00-14:00 - fresh-user journey: register/login, search/map, weather/recommendation, star, community post/image, feedback.
-4. 14:00-18:00 - analytics pipeline and UI result; scheduled alert if it is complete.
+3. 5:00-14:00 - fresh-user journey: register/login, search/map, weather/recommendation, star, community post/image, and rating display.
+4. 14:00-18:00 - analytics pipeline and UI result.
 5. 18:00-21:00 - trace UI actions to API Gateway/Lambda logs, ECS, DynamoDB, S3, and Athena query evidence.
 6. 21:00-23:00 - appropriateness, trade-offs, security, scalability, and limitations.
 7. Remaining time - Q&A and tutor-directed checks.
@@ -881,7 +852,7 @@ The assignment is demo-based and the brief allows about 30 minutes including Q&A
 Before the demo:
 
 - start/extend the learner-lab session early;
-- verify the live URL, ECS tasks, Lambda, API stages, data, analytics, and confirmed SNS email;
+- verify the live URL, ECS tasks, Lambda, API stages, data, and analytics;
 - use deterministic seed/demo data created through the application;
 - have a second browser profile and a backup recording/screenshots, but be ready for a live demonstration;
 - keep the final report and evidence matrix open;
@@ -924,7 +895,7 @@ Final package checks:
 
 > Subject: COSC2980 Assignment 3 - TheWeather proposal and rubric clarification
 >
-> I am implementing TheWeather with separate Dockerized React/Nginx and Spring Boot services on ECS/Fargate behind one Application Load Balancer, plus Lambda, API Gateway, DynamoDB, S3, Athena/Glue, EventBridge/SNS, Geoapify, and Open-Meteo. Spring uses Geoapify for persistable location/address/POI search and normalization, while the browser uses Geoapify map tiles to display the same selected coordinates; Geoapify is claimed once. Open-Meteo provides weather, recommendations, alerts, and the server-captured post snapshot. Client operations will automatically invoke each claimed service, and I will claim marks for at most two external API types. Could you please confirm: (1) the current cloud implementation criterion is capped at 25 points despite the `35~0`/`32 to >0` text; (2) whether at least one service from every listed category is mandatory; (3) whether API Gateway satisfies Networking and Content Delivery and whether the supporting ALB is separately credited; (4) whether ECS/Fargate, ALB, Glue, and Athena are available/acceptable in our Learner Lab and region; (5) whether the two-provider responsibility split above is acceptable; (6) the current demo week/booking process; and (7) whether the Canvas late-penalty text saying 2 marks is a typo?
+> I am implementing TheWeather with separate Dockerized React/Nginx and Spring Boot services on ECS/Fargate behind one Application Load Balancer, plus Lambda, API Gateway, DynamoDB, S3, Athena/Glue, Geoapify, and Open-Meteo. Spring uses Geoapify for persistable location/address/POI search and normalization, while the browser uses Geoapify map tiles to display the same selected coordinates; Geoapify is claimed once. Open-Meteo provides weather, recommendations, and the server-captured post snapshot. Client operations will automatically invoke each claimed service, and I will claim marks for at most two external API types. Could you please confirm: (1) the current cloud implementation criterion is capped at 25 points despite the `35~0`/`32 to >0` text; (2) whether at least one service from every listed category is mandatory; (3) whether API Gateway satisfies Networking and Content Delivery and whether the supporting ALB is separately credited; (4) whether ECS/Fargate, ALB, Glue, and Athena are available/acceptable in our Learner Lab and region; (5) whether the two-provider responsibility split above is acceptable; (6) the current demo week/booking process; and (7) whether the Canvas late-penalty text saying 2 marks is a typo?
 
 Do not stop work while awaiting the reply. Continue with reversible local contracts, tests, and the walking skeleton.
 
@@ -935,7 +906,7 @@ Everything is ready only when all are true:
 - [ ] One complete fresh-user journey works in the deployed application.
 - [ ] Every claimed service/API is automatically invoked and has visible/log/test evidence.
 - [ ] Geoapify search is normalized and persisted by `locationID`; Geoapify map tiles display the same selected coordinates; Open-Meteo owns weather/snapshot data.
-- [ ] Community posts contain description plus the exact server-captured `apiWeather`, use `LocationPostsIndex`, and make no automatic observation-match claim.
+- [ ] Community posts contain description, required author `weatherAccuracyRating`, and the exact server-captured `apiWeather`, use `LocationPostsIndex`, and make no automatic observation-match claim.
 - [ ] The six listed AWS categories have an implemented, documented path, subject to tutor clarification.
 - [ ] No normal feature requires the AWS Console or CLI at runtime.
 - [ ] Core positive, negative, authorization, file, upstream-failure, and empty-data tests pass.
@@ -976,5 +947,5 @@ Do not begin with CSS polishing or a large feature. The first proof must be the 
 
 - **Updated on 4 September:** verified progress snapshot; permission and DynamoDB design status; Geoapify now owns both normalized search/geocoding and browser map-tile display; Mapbox was removed; Geoapify and Open-Meteo are the two external API providers.
 - **Updated previously:** control dates, instruction hierarchy, mark coverage, P0/P1/P2 scope, provider responsibilities, ECS/ALB flows, data models, API contract, 1-12 September schedule, tests, report/evidence guidance, cutoff rules, tutor message, and definition of done.
-- **Removed/superseded:** actionable 30-31 August sessions; separate map/geocoding providers including Mapbox; Open-Meteo geocoding; provider-specific saved IDs; structured observation fields; match/scoring analytics; separate Locations/WeatherSnapshot/Alerts-history/daily-summary models; daily weather emails; continuous normal-weather storage; and environmental analytics.
+- **Removed/superseded:** actionable 30-31 August sessions; separate map/geocoding providers including Mapbox; Open-Meteo geocoding; provider-specific saved IDs; structured observation fields; match/scoring analytics; separate Locations/WeatherSnapshot/daily-summary models; daily weather emails; continuous normal-weather storage; and environmental analytics.
 - **Still confirm with tutor:** rubric 25-point formatting/category interpretation, API Gateway/ALB credit, Learner Lab service availability, two-provider responsibility split, current demo booking/week, and late-penalty wording.
